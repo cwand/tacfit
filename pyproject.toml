@@ -45,11 +45,6 @@ testpaths = [
 	"test",
 ]
 
-[tool.coverage.report]
-exclude_also = [
-	"if __name__ == .__main__.:",
-]
-
 [tool.mypy]
 mypy_path = "src"
 check_untyped_defs = true

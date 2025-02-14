@@ -3,9 +3,9 @@ import numpy.typing as npt
 from typing import Optional
 import matplotlib.pyplot as plt
 
-
 def load_table(path: str) -> dict[str, npt.NDArray[np.float64]]:
-    """Loads a table saved with colibri.save_tac.
+
+    """Loads a data table saved with numpy.savetxt.
 
     Arguments:
     path    --  The filename of the file containing the table.
@@ -29,59 +29,62 @@ def load_table(path: str) -> dict[str, npt.NDArray[np.float64]]:
         data_dict[header_cols[i]] = data[:, i]
     return data_dict
 
+def plot_tac(time_data: npt.NDArray[np.float64],
+             input_data: npt.NDArray[np.float64],
+             tissue_data: npt.NDArray[np.float64],
+             labels: Optional[dict[str, str]] = None,
+             output: Optional[str] = None):
 
-def plot_data_nofit(time_data: npt.NDArray[np.float64],
-                    inp_data: npt.NDArray[np.float64],
-                    tis_data: npt.NDArray[np.float64],
-                    labels: Optional[dict[str, str]] = None,
-                    out_file: Optional[str] = None):
-    """Plots dynamic data without fits.
+    """Plot TAC-data.
 
     Arguments:
-    time_data:  --  The time data in a numpy array.
-    inp_data:   --  Input function data in a numpy array. Will be plotted in
-                    red colour.
-    tis_data:   --  Tissue data in a numpy array. Will be plotted in black.
-    labels:     --  Optional dict of labels to show in the legend and on the
-                    time axis. To replace some or all of the labels, set:
-                    labels['time'] = ...
-                    labels['inp'] = ...
-                    labels['tis'] = ...
-    out_file:   --  If None the plot will be displayed on the screen.
-                    If a path is given, the plot will be saved to a file.
-    """
+    time_data   --  Array of time data
+    input_data  --  Array of input function data
+    tissue_data --  Array of tissue data
+    labels      --  Optional labels to use when plotting. Acknowledged keys
+                    are:
+                    labels['time']:     Used on the x-axis
+                    labels['tacunit']:  Used on the y-axis
+                    labels['input']:    Used in the input function data legend
+                    labels['tissue']:   Used in the tissue data legend
+    output      --  If None, the plot is shown on the screen.
+                    If a path is given, the plot is saved to a file on that
+                    path.
 
-    fig, ax = plt.subplots()
+    """
 
     # Input sanitation
     if labels is None:
         labels = {}
 
-    # Plot input function data
-    label = 'input function'
-    if 'inp' in labels:
-        label = labels['inp']
-    ax.plot(time_data, inp_data, 'ro--', label=label)
+    # Start plotting
+    fig, ax = plt.subplots()
 
-    # Plot tissue data
-    label = 'tissue'
-    if 'tis' in labels:
-        label = labels['tis']
-    ax.plot(time_data, tis_data, 'kx--', label=label)
+    label = "input"
+    if 'input' in labels:
+        label = labels['input']
+    ax.plot(time_data, input_data, 'ro--', label=label)
 
-    # Replace x axis label if required
+    label = "tissue"
+    if 'tissue' in labels:
+        label = labels['tissue']
+    ax.plot(time_data, tissue_data, 'kx--', label=label)
+
     if 'time' in labels:
         ax.set_xlabel(labels['time'])
     else:
-        ax.set_xlabel("Time")
+        ax.set_xlabel("time")
 
-    # Show legend, grid and figure
+    if 'tacunit' in labels:
+        ax.set_ylabel(labels['tacunit'])
+
+    # Show legend and grid
     plt.legend()
     plt.grid(visible=True)
 
-    # Display or save figure
-    if out_file is None:
+    # Show or save figure
+    if output is None:
         plt.show()
     else:
-        plt.savefig(out_file)
+        plt.savefig(output)
         plt.clf()

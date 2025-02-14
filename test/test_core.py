@@ -1,19 +1,20 @@
-import os
 import unittest
-import tacfit
+import os
+
 import numpy as np
 
+import tacfit
 
-class TestLoadDict(unittest.TestCase):
+class TestSaveLoadDict(unittest.TestCase):
 
     def test_save_load_table(self):
         tac = tacfit.load_table(os.path.join('test', 'data', 'ex_tac.txt'))
 
-        tac_exp = np.array([0.0, 1.0, 2.0])
-        self.assertFalse(np.any(tac['tacq'] - tac_exp))
+        tacq_exp = np.array([0.0, 1.0, 2.0])
+        self.assertFalse(np.any(tac['tacq'] - tacq_exp))
 
         a_exp = np.array([1.0, 3.0, 3.5])
-        self.assertFalse(np.any(tac['A'] - a_exp))
+        self.assertFalse(np.any(tac['a'] - a_exp))
 
-        two_exp = np.array([-1.3, 0.1, -2.0])
-        self.assertFalse(np.any(tac['2'] - two_exp))
+        b_exp = np.array([-1.3, 0.1, -2.0])
+        self.assertFalse(np.any(tac['b'] - b_exp))
