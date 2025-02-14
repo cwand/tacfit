@@ -3,6 +3,7 @@ import numpy.typing as npt
 from typing import Optional
 import matplotlib.pyplot as plt
 
+
 def load_table(path: str) -> dict[str, npt.NDArray[np.float64]]:
 
     """Loads a data table saved with numpy.savetxt.
@@ -28,6 +29,7 @@ def load_table(path: str) -> dict[str, npt.NDArray[np.float64]]:
     for i in range(len(header_cols)):
         data_dict[header_cols[i]] = data[:, i]
     return data_dict
+
 
 def plot_tac(time_data: npt.NDArray[np.float64],
              input_data: npt.NDArray[np.float64],
