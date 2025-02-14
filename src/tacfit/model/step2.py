@@ -3,9 +3,9 @@ import numpy.typing as npt
 import scipy
 
 
-def model_step_2(t: npt.NDArray[np.float64],
-                 in_func: npt.NDArray[np.float64],
-                 **kwargs: float) -> npt.NDArray[np.float64]:
+def model_step2(t: npt.NDArray[np.float64],
+                in_func: npt.NDArray[np.float64],
+                **kwargs: float) -> npt.NDArray[np.float64]:
     """Solves the model where the input response function is assumed to be a
     2-step function.
     This function calculates the convolution of a sampled input function with

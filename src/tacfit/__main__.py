@@ -22,6 +22,9 @@ def main(sys_args: list[str]):
     parser.add_argument("tissue_label", help="Label of tissue data")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
+    parser.add_argument("--leastsq", nargs=1,
+                        metavar="MODEL",
+                        help="Fit the data to a model")
 
     args = parser.parse_args(sys_args)
 
@@ -37,6 +40,17 @@ def main(sys_args: list[str]):
                                 'input': args.input_label,
                                 'tissue': args.tissue_label,
                                 'tacunit': "Act. conc. [Bq/mL]"})
+
+    # Fit data using lmfit least squares if desired
+    if args.leastsq is not None:
+        models = {
+            'step2': tacfit.model.model_step2
+        }
+        tacfit.fit_leastsq(tac[args.time_label],
+                           tac[args.tissue_label],
+                           tac[args.input_label],
+                           models[args.leastsq[0]],
+                           )
 
     # Report successful end of program
     run_time = (time.time_ns() - start_time) * 1e-9
