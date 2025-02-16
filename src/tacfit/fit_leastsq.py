@@ -33,9 +33,9 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     # Report!
     lmfit.report_fit(res)
     # Calculate best fitting model
-    best_fit = model(time_data[0:tcut],
+    best_fit = model(time_data[0:tcut],  # type: ignore
                      input_data[0:tcut],
-                     res.best_values)
+                     **res.best_values)
 
     fig, ax = plt.subplots()
     ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
