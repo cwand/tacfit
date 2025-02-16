@@ -4,6 +4,7 @@ import tacfit
 import sys
 import importlib.metadata
 import time
+import os
 
 
 def _create_params(param_str: list[list[str]]) -> dict[str, dict[str, float]]:
@@ -132,7 +133,7 @@ def main(sys_args: list[str]):
         if args.save_figs is None:
             output = None
         else:
-            output = args.save_figs[0]
+            output = os.path.join(args.save_figs[0], "plot_nogit.png")
         tacfit.plot_tac(tac[args.time_label],
                         tac[args.input_label],
                         tac[args.tissue_label],
