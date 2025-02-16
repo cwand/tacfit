@@ -1,8 +1,33 @@
 import argparse
+import numpy as np
 import tacfit
 import sys
 import importlib.metadata
 import time
+
+
+def _create_params(param_str: list[list[str]]) -> dict[str, dict[str, float]]:
+    # Create a parameter dict from the input argument list of strings
+    res = {}
+
+    for param in param_str:
+        param_dict = {
+            'value': float(param[1])
+        }
+
+        if param[2] == "x":
+            param_dict['min'] = -np.inf
+        else:
+            param_dict['min'] = float(param[2])
+
+        if param[3] == "x":
+            param_dict['max'] = np.inf
+        else:
+            param_dict['max'] = float(param[3])
+
+        res[param[0]] = param_dict
+
+    return res
 
 
 def main(sys_args: list[str]):
@@ -23,6 +48,17 @@ def main(sys_args: list[str]):
     parser.add_argument("model", help="Model to use for fitting. Use the "
                                       "option --list_models to see all "
                                       "available models.")
+    parser.add_argument("--param", action='append', nargs=4,
+                        metavar=("par", "ini", "min", "max"),
+                        help="Set parameter initial guesses and bounds. "
+                             "\"par\" is the name of the parameter as given "
+                             "in --list_models. Use \"x\" to indicate no "
+                             "bound. Each parameter in the model is set with "
+                             "a separate --param.")
+    parser.add_argument("--leastsq", action='store_true',
+                        help="Fit the data to the chosen model using the "
+                             "least squares method. Requires all model "
+                             "parameters be set using --param.")
     parser.add_argument("--list_models", action='store_true',
                         help="List all available models and their "
                              "parameters.")
@@ -41,9 +77,9 @@ def main(sys_args: list[str]):
 
     # Possible models to use for fitting:
     models = {
-        "step2": {'func': tacfit.model.model_step2,
-                  'desc': "Sum of two step functions "
-                          "(amp1, extent1, amp2, extent2)"}
+        "step2": {'func':  tacfit.model.model_step2,
+                  'desc':  "Sum of two step functions "
+                           "(amp1, extent1, amp2, extent2)."}
     }
 
     # List models option
@@ -51,7 +87,44 @@ def main(sys_args: list[str]):
         print("List of available models (and parameters):")
         for model in models:
             print(f'-- {model}: {models[model]["desc"]}')
+        print()
+
+    # Get chosen model
+    model_str = args.model
+    print(f'Model: {model_str}')
+    model_desc = models[model_str]['desc']
+    print(f'Description: {model_desc}')
     print()
+
+    # Get parameters:
+    params = _create_params(args.param)
+    print("Parameter settings:")
+    for param in params:
+        print(f'  {param}:')
+        param_value = params[param]['value']
+        param_min = params[param]['min']
+        param_max = params[param]['max']
+        print(f'     value: {param_value}')
+        print(f'     min:   {param_min}')
+        print(f'     max:   {param_max}')
+    print()
+
+    # Fit least squares if required
+    if args.leastsq:
+        print("Starting least squares fitting.")
+        if args.save_figs is None:
+            output = None
+        else:
+            output = args.save_figs[0]
+        tacfit.fit_leastsq(tac[args.time_label],
+                           tac[args.tissue_label],
+                           tac[args.input_label],
+                           models[model_str]['func'],  # type: ignore
+                           params,
+                           {'tissue': args.tissue_label,
+                            'input': args.input_label},
+                           output=output)
+        print()
 
     # Plot data if required
     if args.plot_nofit:

@@ -15,8 +15,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
-                tcut: int,
-                output: Optional[str]) -> None:
+                tcut: Optional[int] = None,
+                output: Optional[str] = None) -> None:
     # Fit a TAC to a given function using lmfit
 
     # Create lmfit Parameters-object
