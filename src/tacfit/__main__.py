@@ -132,7 +132,7 @@ def main(sys_args: list[str]):
         print()
 
     # Monte Carlo sampling if required
-    if 'mcpost' in args:
+    if args.mcpost:
         print("Starting Monte Calor sampling.")
         mc_opts = args.mcpost
         print("Monte Carlo parameters:")
