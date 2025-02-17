@@ -60,6 +60,10 @@ def main(sys_args: list[str]):
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
+    parser.add_argument("--mcpost", nargs=5, type=int,
+                        metavar=("steps", "walkers", "burn", "thin", "pool"),
+                        help="Make a Monte Carlo sampling of the posterior "
+                             "parameter probability distribution function.")
     parser.add_argument("--list_models", action='store_true',
                         help="List all available models and their "
                              "parameters.")
@@ -125,6 +129,32 @@ def main(sys_args: list[str]):
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
                            output=output)
+        print()
+
+    # Monte Carlo sampling if required
+    if 'mcpost' in args:
+        print("Starting Monte Calor sampling.")
+        mc_opts = args.mcpost
+        print("Monte Carlo parameters:")
+        print(f'  steps:   {mc_opts[0]}')
+        print(f'  walkers: {mc_opts[1]}')
+        print(f'  burn:    {mc_opts[2]}')
+        print(f'  thin:    {mc_opts[3]}')
+        print(f'  threads: {mc_opts[4]}')
+        if args.save_figs is None:
+            output = None
+        else:
+            output = args.save_figs[0]
+        tacfit.mc_sample(tac[args.time_label],
+                         tac[args.tissue_label],
+                         tac[args.input_label],
+                         {'tissue': args.tissue_label,
+                          'input': args.input_label},
+                         models[model_str]['func'],  # type: ignore
+                         params,
+                         mc_opts[0], mc_opts[1], mc_opts[4],
+                         mc_opts[2], mc_opts[3],
+                         output=output)
         print()
 
     # Plot data if required
