@@ -49,6 +49,8 @@ def main(sys_args: list[str]):
     parser.add_argument("model", help="Model to use for fitting. Use the "
                                       "option --list_models to see all "
                                       "available models.")
+    parser.add_argument("--tcut", metavar="n", type=int,
+                        help="Cut the data at the n\'th data point")
     parser.add_argument("--param", action='append', nargs=4,
                         metavar=("par", "ini", "min", "max"),
                         help="Set parameter initial guesses and bounds. "
@@ -78,6 +80,34 @@ def main(sys_args: list[str]):
     # Load data file
     print(f'Loading data from {args.tac_path}.')
     tac = tacfit.load_table(args.tac_path)
+    print()
+
+    # Report chosen labels:
+    if args.time_label in tac:
+        print(f'Time label {args.time_label} was found in data file.')
+    else:
+        print(f'Time label {args.time_label} was not found in data file.')
+        exit()
+
+    if args.input_label in tac:
+        print(f'Input label {args.input_label} was found in data file.')
+    else:
+        print(f'Input label {args.input_label} was not found in data file.')
+        exit()
+
+    if args.tissue_label in tac:
+        print(f'Tissue label {args.tissue_label} was found in data file.')
+    else:
+        print(f'Tissue label {args.tissue_label} was not found in data file.')
+        exit()
+    print()
+
+    tcut = None
+    if args.tcut:
+        tcut = args.tcut
+        print(f'Using tcut = {tcut}.')
+    else:
+        print("No tcut set, using all data.")
     print()
 
     # Possible models to use for fitting:
@@ -128,7 +158,8 @@ def main(sys_args: list[str]):
                            params,
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
-                           output=output)
+                           output=output,
+                           tcut=tcut)
         print()
 
     # Monte Carlo sampling if required
@@ -154,7 +185,8 @@ def main(sys_args: list[str]):
                          params,
                          mc_opts[0], mc_opts[1], mc_opts[4],
                          mc_opts[2], mc_opts[3],
-                         output=output)
+                         output=output,
+                         tcut=tcut)
         print()
 
     # Plot data if required
