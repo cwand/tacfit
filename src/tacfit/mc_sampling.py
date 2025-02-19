@@ -8,26 +8,32 @@ import matplotlib.pyplot as plt
 import os
 
 
-def _log_prob_tissue(tissue_data: npt.NDArray[np.float64],
-                     tissue_smpl: npt.NDArray[np.float64],
-                     ln_sigma_tissue: float) -> float:
+def _resample_gaussian(input_data: npt.NDArray[np.float64],
+                       sigma: float) -> npt.NDArray[np.float64]:
+    rng = np.random.default_rng()
+    sigma_y = sigma * input_data
+    return rng.normal(loc=input_data, scale=sigma_y)
+
+
+def _log_prob_smpl(data: npt.NDArray[np.float64],
+                   smpl: npt.NDArray[np.float64],
+                   ln_sigma: float) -> float:
 
     # For each data point there are two contributions:
     #   1) the distance between the data and the sample relative to the
     #      uncertainty,
     #   2) the uncertainty itself
 
-    n = tissue_data.size  # number of data points
+    n = data.size  # number of data points
 
     # Contribution 1:
-    cont1 = -np.sum(((np.power(tissue_data - tissue_smpl, 2.0)) /
-                     (2.0 * np.exp(2.0 * ln_sigma_tissue) *
-                      np.power(tissue_data, 2.0))))
+    cont1 = -np.sum(((np.power(data - smpl, 2.0)) /
+                     (2.0 * np.exp(2.0 * ln_sigma) * np.power(data, 2.0))))
 
     # Contribution 2:
-    y2 = np.power(tissue_data, 2.0)
+    y2 = np.power(data, 2.0)
     lny2 = np.log(2.0 * np.pi * y2)
-    cont2 = -n * ln_sigma_tissue - 0.5 * np.sum(lny2)
+    cont2 = -n * ln_sigma - 0.5 * np.sum(lny2)
 
     return float(cont1 + cont2)
 
@@ -57,11 +63,21 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
         if not param_bounds[param][0] < params[param] < param_bounds[param][1]:
             return -np.inf
 
-    # Calculate the model given the current parameters
-    ymodel = model(time_data, input_data, **params)  # type: ignore
+    # Resample input function given current uncertainty estimate
+    resampled_input = _resample_gaussian(input_data,
+                                         np.exp(params['__lnsigma']))
+
+    # Calculate the model given the current parameters and the resampled input
+    ymodel = model(time_data, resampled_input, **params)  # type: ignore
 
     # Calculate and return the log-proability distribution (non-normalised)
-    return _log_prob_tissue(tissue_data, ymodel, params['__lnsigma'])
+    log_prop_input = _log_prob_smpl(input_data,
+                                    resampled_input,
+                                    params['__lnsigma'])
+    log_prop_tissue = _log_prob_smpl(tissue_data,
+                                     ymodel,
+                                     params['__lnsigma'])
+    return log_prop_input + log_prop_tissue
 
 
 def mc_sample(time_data: npt.NDArray[np.float64],

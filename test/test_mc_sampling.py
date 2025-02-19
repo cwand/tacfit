@@ -1,4 +1,4 @@
-from tacfit.mc_sampling import _log_prob_tissue
+from tacfit.mc_sampling import _log_prob_smpl
 import numpy as np
 import unittest
 
@@ -11,7 +11,7 @@ class TestLogProb(unittest.TestCase):
 
         lnsigma_tissue = -4.0
 
-        lnp = _log_prob_tissue(tissue_data, tissue_smpl, lnsigma_tissue)
+        lnp = _log_prob_smpl(tissue_data, tissue_smpl, lnsigma_tissue)
 
         self.assertAlmostEqual(9.839339, lnp, places=6)
 
@@ -21,6 +21,6 @@ class TestLogProb(unittest.TestCase):
 
         lnsigma_tissue = -4.0
 
-        lnp = _log_prob_tissue(tissue_data, tissue_smpl, lnsigma_tissue)
+        lnp = _log_prob_smpl(tissue_data, tissue_smpl, lnsigma_tissue)
 
         self.assertAlmostEqual(-14.173933, lnp, places=6)
