@@ -66,6 +66,10 @@ def main(sys_args: list[str]):
                         metavar=("steps", "walkers", "burn", "thin", "pool"),
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
+    parser.add_argument("--rng_seed", type=int,
+                        help="Set the RNG seed. If no seed is provided the "
+                             "seed will be set automatically from "
+                             "nondeterministic OS data.")
     parser.add_argument("--list_models", action='store_true',
                         help="List all available models and their "
                              "parameters.")
@@ -142,6 +146,13 @@ def main(sys_args: list[str]):
         print(f'     value: {param_value}')
         print(f'     min:   {param_min}')
         print(f'     max:   {param_max}')
+    print()
+
+    if args.rng_seed:
+        print(f'Setting RNG seed to {args.rng_seed}')
+        np.random.seed(args.rng_seed)
+    else:
+        print("Using nondeterministic RNG seed")
     print()
 
     # Fit least squares if required
