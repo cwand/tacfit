@@ -46,18 +46,27 @@ def model_step2(t: npt.NDArray[np.float64],
     for i in range(0, res.size):
         # For each time point the integrand is integrated.
 
-        # We split the integral up into the two step-functions to avoid
-        # discontinuity problems
+        # We split the integral up into the two step-functions and increase
+        # the maximum subdivision limit to avoid discontinuity problems
+
+        # We slacken the error tolerance for faster fits and to avoid warnings
+        # about roundoff errors.
 
         # First integral from max(0, t-ext2) to max(0, t-ext1)
         y1 = scipy.integrate.quad(integrand,
                                   max(0.0, t[i] - ext2),
-                                  max(0.0, t[i] - ext1))
+                                  max(0.0, t[i] - ext1),
+                                  limit=500,
+                                  epsabs=0.001,
+                                  epsrel=0.001)
 
         # Second integral from max(0, t-ext1) to t
         y2 = scipy.integrate.quad(integrand,
                                   max(0.0, t[i] - ext1),
-                                  t[i])
+                                  t[i],
+                                  limit=500,
+                                  epsabs=0.001,
+                                  epsrel=0.001)
 
         # Multiply by the amplitudes
         res[i] = amp2*y1[0] + (amp1 + amp2)*y2[0]
