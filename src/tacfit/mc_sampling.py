@@ -205,10 +205,6 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                          input_data[0:tcut],
                          **original_values)
 
-    ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
-    ax.plot(time_data, input_data, 'rx--', label=labels['input'])
-    ax.plot(time_data[0:tcut], ml50_fit, 'k-', label="ML50 Fit")
-    ax.plot(time_data[0:tcut], original_fit, 'k-', label="Original Fit")
     # Pick 100 random samples and plot the projection to illustrate
     # parameter variation
     inds = np.random.randint(len(flat_samples), size=100)
@@ -221,6 +217,12 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                            input_data[0:tcut],
                            **smpl_params)
         ax.plot(time_data[0:tcut], smpl_model, "C1", alpha=0.1)
+
+    ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
+    ax.plot(time_data, input_data, 'rx--', label=labels['input'])
+    ax.plot(time_data[0:tcut], ml50_fit, 'b-', label="ML50 Fit")
+    ax.plot(time_data[0:tcut], original_fit, 'k-', label="Original Fit")
+
     ax.set_xlabel('Time [sec]')
     ax.set_ylabel('Mean ROI-activity concentration [Bq/mL]')
 
@@ -229,6 +231,6 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     if output is None:
         plt.show()
     else:
-        fit_png_path = os.path.join(output, "fit.png")
+        fit_png_path = os.path.join(output, "fit_mc.png")
         plt.savefig(fit_png_path)
         plt.clf()
