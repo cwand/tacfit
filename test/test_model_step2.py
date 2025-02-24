@@ -16,7 +16,8 @@ class TestModelStep2(unittest.TestCase):
 
         m = tacfit.model.step2.model_step2(amp1=amp, extent1=extent,
                                            amp2=amp2, extent2=extent2,
-                                           t=tp, in_func=in_func)
+                                           t_in=tp, in_func=in_func,
+                                           t_out=tp.copy())
 
         m_exp = np.array([0.0, 419.5657, 2704.4526,
                           3640.1826, 1233.5420, 81.7247])
