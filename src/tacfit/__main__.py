@@ -49,12 +49,14 @@ def main(sys_args: list[str]):
     parser.add_argument("model", help="Model to use for fitting. Use the "
                                       "option --list_models to see all "
                                       "available models.")
-    parser.add_argument("--tcut", metavar="n", type=int,
-                        help="Cut the data at the n\'th data point")
+    parser.add_argument("--tcut", metavar="N", type=int,
+                        help="Cut the data at the N\'th data point")
+    parser.add_argument("--delay", type=float,
+                        help="Delay the input function signal.")
     parser.add_argument("--param", action='append', nargs=4,
-                        metavar=("par", "ini", "min", "max"),
+                        metavar=("PAR", "INI", "MIN", "MAX"),
                         help="Set parameter initial guesses and bounds. "
-                             "\"par\" is the name of the parameter as given "
+                             "\"PAR\" is the name of the parameter as given "
                              "in --list_models. Use \"x\" to indicate no "
                              "bound. Each parameter in the model is set with "
                              "a separate --param.")
@@ -63,7 +65,7 @@ def main(sys_args: list[str]):
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
     parser.add_argument("--mcpost", nargs=5, type=int,
-                        metavar=("steps", "walkers", "burn", "thin", "pool"),
+                        metavar=("STEPS", "WALKERS", "BURN", "THIN", "POOL"),
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
     parser.add_argument("--rng_seed", type=int,
@@ -75,7 +77,7 @@ def main(sys_args: list[str]):
                              "parameters.")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
-    parser.add_argument("--save_figs", nargs=1, metavar="path",
+    parser.add_argument("--save_figs", nargs=1, metavar="PATH",
                         help="Save figures to the given path rather than "
                              "showing them.")
 
@@ -112,6 +114,14 @@ def main(sys_args: list[str]):
         print(f'Using tcut = {tcut}.')
     else:
         print("No tcut set, using all data.")
+    print()
+
+    tdelay = None
+    if args.delay:
+        tdelay = args.tdelay
+        print(f'Using delay = {tdelay} s.')
+    else:
+        print("No delay set, using delay = 0 s.")
     print()
 
     # Possible models to use for fitting:
