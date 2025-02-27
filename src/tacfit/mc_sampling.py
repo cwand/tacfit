@@ -42,8 +42,10 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
                param_names: list[str],
                model: Callable[[npt.NDArray[np.float64],
                                 npt.NDArray[np.float64],
+                                npt.NDArray[np.float64],
                                 dict[str, float]],
                                npt.NDArray[np.float64]],
+               input_time: npt.NDArray[np.float64],
                time_data: npt.NDArray[np.float64],
                input_data: npt.NDArray[np.float64],
                tissue_data: npt.NDArray[np.float64],
@@ -68,7 +70,9 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
                                          np.exp(params['__lnsigma']))
 
     # Calculate the model given the current parameters and the resampled input
-    ymodel = model(time_data, resampled_input, **params)  # type: ignore
+    ymodel = model(input_time,
+                   resampled_input,
+                   time_data, **params)  # type: ignore
 
     # Calculate and return the log-proability distribution (non-normalised)
     log_prop_input = _log_prob_smpl(input_data,
@@ -95,14 +99,20 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               burn: int,
               thin: int,
               tcut: Optional[int] = None,
+              delay: Optional[float] = None,
               output: Optional[str] = None) -> None:
 
     # Sample the posterior parameter distribution space using Monte Carlo
     # simulations with the emcee-package
 
     # Input sanitation
-    if tcut is None:
-        tcut = time_data.size
+    tcut_sane = time_data.size
+    if tcut is not None:
+        tcut_sane = tcut
+
+    input_time = time_data.copy()
+    if delay is not None:
+        input_time = input_time + delay
 
     # Parameters need to be unpacked when passed to emcee
     param_start = []  # Contains the optimised parameters (from an actual fit)
@@ -114,9 +124,10 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         param_bounds[param] = (params[param]['min'], params[param]['max'])
 
     # Cut data as required
-    time_data_cut = time_data[0:tcut]
-    input_data_cut = input_data[0:tcut]
-    tissue_data_cut = tissue_data[0:tcut]
+    input_time_cut = input_time[0:tcut_sane]
+    time_data_cut = time_data[0:tcut_sane]
+    input_data_cut = input_data[0:tcut_sane]
+    tissue_data_cut = tissue_data[0:tcut_sane]
 
     # Dimensionality of the parameter space
     n_dim = len(param_start)
@@ -129,6 +140,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         # Start MC
         sampler = emcee.EnsembleSampler(nwalkers, n_dim, _emcee_fcn,
                                         args=(param_names, model,
+                                              input_time_cut,
                                               time_data_cut, input_data_cut,
                                               tissue_data_cut, param_bounds),
                                         pool=pool)

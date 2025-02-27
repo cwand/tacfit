@@ -118,7 +118,7 @@ def main(sys_args: list[str]):
 
     tdelay = None
     if args.delay:
-        tdelay = args.tdelay
+        tdelay = args.delay
         print(f'Using delay = {tdelay} s.')
     else:
         print("No delay set, using delay = 0 s.")
@@ -180,7 +180,8 @@ def main(sys_args: list[str]):
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
                            output=output,
-                           tcut=tcut)
+                           tcut=tcut,
+                           delay=tdelay)
         print()
 
     # Monte Carlo sampling if required

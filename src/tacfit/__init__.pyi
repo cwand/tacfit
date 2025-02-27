@@ -40,4 +40,5 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               burn: int,
               thin: int,
               tcut: Optional[int] = ...,
+              delay: Optional[float] = ...,
               output: Optional[str] = ...) -> None: ...
