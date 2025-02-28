@@ -126,9 +126,14 @@ def main(sys_args: list[str]):
 
     # Possible models to use for fitting:
     models = {
-        "step2": {'func':  tacfit.model.model_step2,
-                  'desc':  "Sum of two step functions "
-                           "(amp1, extent1, amp2, extent2)."}
+        "step2": {
+            'func':  tacfit.model.model_step2,
+            'desc':  "Two step functions "
+                     "(amp1, extent1, amp2, extent2)."},
+        "stepconst": {
+            'func': tacfit.model.model_stepconst,
+            'desc': "Step function followed by constant "
+                    "(amp1, extent1, amp2)."},
     }
 
     # List models option
