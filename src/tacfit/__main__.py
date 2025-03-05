@@ -16,6 +16,7 @@ def _create_params(param_str: list[list[str]]) -> dict[str, dict[str, float]]:
             'value': float(param[1])
         }
 
+        # Handle optional bounds: x means no bound in that direction
         if param[2] == "x":
             param_dict['min'] = -np.inf
         else:
@@ -64,10 +65,10 @@ def main(sys_args: list[str]):
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
-    parser.add_argument("--mcpost", nargs=5, type=int,
-                        metavar=("STEPS", "WALKERS", "BURN", "THIN", "POOL"),
-                        help="Make a Monte Carlo sampling of the posterior "
-                             "parameter probability distribution function.")
+    #parser.add_argument("--mcpost", nargs=5, type=int,
+    #                    metavar=("STEPS", "WALKERS", "BURN", "THIN", "POOL"),
+    #                    help="Make a Monte Carlo sampling of the posterior "
+    #                         "parameter probability distribution function.")
     parser.add_argument("--rng_seed", type=int,
                         help="Set the RNG seed. If no seed is provided the "
                              "seed will be set automatically from "
@@ -108,6 +109,7 @@ def main(sys_args: list[str]):
         exit()
     print()
 
+    # Report chosen tcut
     tcut = None
     if args.tcut:
         tcut = args.tcut
@@ -116,6 +118,7 @@ def main(sys_args: list[str]):
         print("No tcut set, using all data.")
     print()
 
+    # Report chosen tdelay
     tdelay = None
     if args.delay:
         tdelay = args.delay
@@ -163,6 +166,7 @@ def main(sys_args: list[str]):
         print(f'     max:   {param_max}')
     print()
 
+    # Set RNG-seed if chosen
     if args.rng_seed:
         print(f'Setting RNG seed to {args.rng_seed}')
         np.random.seed(args.rng_seed)
@@ -190,31 +194,31 @@ def main(sys_args: list[str]):
         print()
 
     # Monte Carlo sampling if required
-    if args.mcpost:
-        print("Starting Monte Calor sampling.")
-        mc_opts = args.mcpost
-        print("Monte Carlo parameters:")
-        print(f'  steps:   {mc_opts[0]}')
-        print(f'  walkers: {mc_opts[1]}')
-        print(f'  burn:    {mc_opts[2]}')
-        print(f'  thin:    {mc_opts[3]}')
-        print(f'  threads: {mc_opts[4]}')
-        if args.save_figs is None:
-            output = None
-        else:
-            output = args.save_figs[0]
-        tacfit.mc_sample(tac[args.time_label],
-                         tac[args.tissue_label],
-                         tac[args.input_label],
-                         {'tissue': args.tissue_label,
-                          'input': args.input_label},
-                         models[model_str]['func'],  # type: ignore
-                         params,
-                         mc_opts[0], mc_opts[1], mc_opts[4],
-                         mc_opts[2], mc_opts[3],
-                         output=output,
-                         tcut=tcut)
-        print()
+    #if args.mcpost:
+    #    print("Starting Monte Calor sampling.")
+    #    mc_opts = args.mcpost
+    #    print("Monte Carlo parameters:")
+    #    print(f'  steps:   {mc_opts[0]}')
+    #    print(f'  walkers: {mc_opts[1]}')
+    #    print(f'  burn:    {mc_opts[2]}')
+    #    print(f'  thin:    {mc_opts[3]}')
+    #    print(f'  threads: {mc_opts[4]}')
+    #    if args.save_figs is None:
+    #        output = None
+    #    else:
+    #        output = args.save_figs[0]
+    #    tacfit.mc_sample(tac[args.time_label],
+    #                     tac[args.tissue_label],
+    #                     tac[args.input_label],
+    #                     {'tissue': args.tissue_label,
+    #                      'input': args.input_label},
+    #                     models[model_str]['func'],  # type: ignore
+    #                     params,
+    #                    mc_opts[0], mc_opts[1], mc_opts[4],
+    #                     mc_opts[2], mc_opts[3],
+    #                     output=output,
+    #                     tcut=tcut)
+    #    print()
 
     # Plot data if required
     if args.plot_nofit:

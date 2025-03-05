@@ -25,6 +25,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 delay: Optional[float] = ...,
                 output: Optional[str] = ...) -> None: ...
 
+'''
+Todo
 def mc_sample(time_data: npt.NDArray[np.float64],
               tissue_data: npt.NDArray[np.float64],
               input_data: npt.NDArray[np.float64],
@@ -42,3 +44,4 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               tcut: Optional[int] = ...,
               delay: Optional[float] = ...,
               output: Optional[str] = ...) -> None: ...
+'''

@@ -19,8 +19,37 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tcut: Optional[int] = None,
                 delay: Optional[float] = None,
                 output: Optional[str] = None) -> None:
+    """Fit a model to measured TAC data using lmfit.
+    This minimised the sum of squared residuals using the least-squares method
+    of the lmfit package. The residuals are defined as the distance between the
+    measured tissue function and the modeled tissue function given the input
+    function and the parameters of the model.
 
-    # Fit a TAC to a given function using lmfit
+    Arguments:
+    time_data   --  Array of time data
+    tissue_data --  Array of measured tissue data
+    input_data  --  Array of measured input function data
+    model       --  The model to fit to the data
+    params      --  Dict object setting initial values and bounds for the
+                    parameters of the model. It must be structured like
+                    {'param1': {'value': ...,
+                                'min': ...,
+                                'max': ...},
+                     ...
+                    }
+    labels      --  Labels to use when plotting. Required keys are:
+                    labels['input']:    Used in the input function data legend
+                    labels['tissue']:   Used in the tissue data legend
+    tcut        --  Fit only the first tcut data points. If None (default), all
+                    the data points are included in the fit.
+    delay       --  Delay the input function. This shifts the measurement times
+                    of the input function, such that a point previously
+                    measured at time t will be set to a new time t+delay. None
+                    (default) means no delay (delay=0.0).
+    output      --  If None, plots are shown on the screen.
+                    If a path is given, plots are saved to files on that
+                    path.
+    """
 
     # Input sanitation:
 
