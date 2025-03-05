@@ -65,7 +65,7 @@ def main(sys_args: list[str]):
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
-    #parser.add_argument("--mcpost", nargs=5, type=int,
+    # parser.add_argument("--mcpost", nargs=5, type=int,
     #                    metavar=("STEPS", "WALKERS", "BURN", "THIN", "POOL"),
     #                    help="Make a Monte Carlo sampling of the posterior "
     #                         "parameter probability distribution function.")
@@ -194,7 +194,7 @@ def main(sys_args: list[str]):
         print()
 
     # Monte Carlo sampling if required
-    #if args.mcpost:
+    # if args.mcpost:
     #    print("Starting Monte Calor sampling.")
     #    mc_opts = args.mcpost
     #    print("Monte Carlo parameters:")
