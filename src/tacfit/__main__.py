@@ -50,8 +50,10 @@ def main(sys_args: list[str]):
     parser.add_argument("model", help="Model to use for fitting. Use the "
                                       "option --list_models to see all "
                                       "available models.")
-    parser.add_argument("--tcut", metavar="N", type=int,
-                        help="Cut the data at the N\'th data point")
+    parser.add_argument("--tcut", metavar="N", type=int, nargs='*',
+                        help="Cut the data at the N\'th data point. It is "
+                             "possible to provide a list of values to scan"
+                             "through them.")
     parser.add_argument("--delay", type=float,
                         help="Delay the input function signal.")
     parser.add_argument("--param", action='append', nargs=4,
@@ -113,6 +115,8 @@ def main(sys_args: list[str]):
     tcut = None
     if args.tcut:
         tcut = args.tcut
+        if len(tcut) == 1:
+            tcut = tcut[0]
         print(f'Using tcut = {tcut}.')
     else:
         print("No tcut set, using all data.")
