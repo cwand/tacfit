@@ -54,8 +54,10 @@ def main(sys_args: list[str]):
                         help="Cut the data at the N\'th data point. It is "
                              "possible to provide a list of values to scan"
                              "through them.")
-    parser.add_argument("--delay", type=float,
-                        help="Delay the input function signal.")
+    parser.add_argument("--delay", type=float, nargs='*',
+                        help="Delay the input function signal. It is possible"
+                             "to provide a list of values to scan through "
+                             "them.")
     parser.add_argument("--param", action='append', nargs=4,
                         metavar=("PAR", "INI", "MIN", "MAX"),
                         help="Set parameter initial guesses and bounds. "
@@ -111,7 +113,7 @@ def main(sys_args: list[str]):
         exit()
     print()
 
-    # Report chosen tcut
+    # Report chosen tcut and handle int vs list[int] options
     tcut = None
     if args.tcut:
         tcut = args.tcut
@@ -122,10 +124,12 @@ def main(sys_args: list[str]):
         print("No tcut set, using all data.")
     print()
 
-    # Report chosen tdelay
+    # Report chosen tdelay and handle float vs list[float] options
     tdelay = None
     if args.delay:
         tdelay = args.delay
+        if len(tdelay) == 1:
+            tdelay = tdelay[0]
         print(f'Using delay = {tdelay} s.')
     else:
         print("No delay set, using delay = 0 s.")

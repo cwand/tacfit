@@ -22,7 +22,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
                 tcut: Optional[int | list[int]] = ...,
-                delay: Optional[float] = ...,
+                delay: Optional[float | list[float]] = ...,
                 output: Optional[str] = ...) -> None: ...
 
 
