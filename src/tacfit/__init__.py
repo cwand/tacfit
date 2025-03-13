@@ -5,4 +5,7 @@ from .fit_leastsq import fit_leastsq
 from . import model
 
 # __all__ = ["load_table", "plot_tac", "fit_leastsq", "mc_sample", "model"]
-__all__ = ["load_table", "plot_tac", "fit_leastsq", "model"]
+__all__ = ["load_table",
+           "plot_tac",
+           "fit_leastsq",
+           "model"]

@@ -41,7 +41,7 @@ def model_stepconst(t_in: npt.NDArray[np.float64],
     # of the input function. The amplitudes will be multiplied after
     # integration.
     def integrand(tau: float):
-        return np.interp(tau, t_in, in_func)
+        return np.interp(tau, t_in, in_func, left=0.0)
 
     for i in range(0, res.size):
         # For each time point the integrand is integrated.

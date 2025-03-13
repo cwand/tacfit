@@ -54,10 +54,8 @@ def main(sys_args: list[str]):
                         help="Cut the data at the N\'th data point. It is "
                              "possible to provide a list of values to scan"
                              "through them.")
-    parser.add_argument("--delay", type=float, nargs='*',
-                        help="Delay the input function signal. It is possible"
-                             "to provide a list of values to scan through "
-                             "them.")
+    parser.add_argument("--delay", type=float, metavar="T",
+                        help="Delay the input function signal for T seconds.")
     parser.add_argument("--param", action='append', nargs=4,
                         metavar=("PAR", "INI", "MIN", "MAX"),
                         help="Set parameter initial guesses and bounds. "
@@ -80,6 +78,10 @@ def main(sys_args: list[str]):
     parser.add_argument("--list_models", action='store_true',
                         help="List all available models and their "
                              "parameters.")
+    parser.add_argument("--early", metavar="N", type=int,
+                        help="Make analysis of early data to estimate optimal "
+                             "input function delay. The first N data points "
+                             "are used in the analysis.")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
     parser.add_argument("--save_figs", nargs=1, metavar="PATH",
@@ -137,6 +139,14 @@ def main(sys_args: list[str]):
 
     # Possible models to use for fitting:
     models = {
+        "nomodel": {
+            'func': lambda x: 1,
+            'desc': "Mock model, used when no modelling is required"
+        },
+        "delay": {
+            'func': tacfit.model.model_delay,
+            'desc': "Constant with input function delay "
+                    "(delay, k)."},
         "step2": {
             'func':  tacfit.model.model_step2,
             'desc':  "Two step functions "
@@ -162,16 +172,20 @@ def main(sys_args: list[str]):
     print()
 
     # Get parameters:
-    params = _create_params(args.param)
-    print("Parameter settings:")
-    for param in params:
-        print(f'  {param}:')
-        param_value = params[param]['value']
-        param_min = params[param]['min']
-        param_max = params[param]['max']
-        print(f'     value: {param_value}')
-        print(f'     min:   {param_min}')
-        print(f'     max:   {param_max}')
+    if args.param is not None:
+        params = _create_params(args.param)
+        print("Parameter settings:")
+        for param in params:
+            print(f'  {param}:')
+            param_value = params[param]['value']
+            param_min = params[param]['min']
+            param_max = params[param]['max']
+            print(f'     value: {param_value}')
+            print(f'     min:   {param_min}')
+            print(f'     max:   {param_max}')
+    else:
+        print("No model parameters specified.")
+        params = None
     print()
 
     # Set RNG-seed if chosen
@@ -200,6 +214,7 @@ def main(sys_args: list[str]):
                            tcut=tcut,
                            delay=tdelay)
         print()
+
 
     # Monte Carlo sampling if required
     # if args.mcpost:

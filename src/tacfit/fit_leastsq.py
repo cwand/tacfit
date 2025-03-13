@@ -18,7 +18,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
                 tcut: Optional[int | list[int]] = None,
-                delay: Optional[float | list[float]] = None,
+                delay: Optional[float] = None,
                 output: Optional[str] = None) -> None:
     """Fit a model to measured TAC data using lmfit.
     This minimised the sum of squared residuals using the least-squares method
@@ -48,8 +48,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     delay       --  Delay the input function. This shifts the measurement times
                     of the input function, such that a point previously
                     measured at time t will be set to a new time t+delay. None
-                    (default) means no delay (delay=0.0). If a list is given, a
-                    fit will be made for all values in the list.
+                    (default) means no delay (delay=0.0).
     output      --  If None, plots are shown on the screen.
                     If a path is given, plots are saved to files on that
                     path.
@@ -71,119 +70,105 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         t_cut = tcut
 
     # If delay is None, use the value 0.0 (no delay)
-    t_d = [0.0]
-    if isinstance(delay, float):
+    t_d = 0.0
+    if delay is not None:
         # A float was given as tcut: use as single value
-        t_d = [delay]
-    elif isinstance(delay, list):
-        # A list was given, fit all values in the list
-        single_fit = False
         t_d = delay
 
     # Create container for results if running in multi_fit mode
     scan_res = {
         'tcuts': t_cut.copy(),
-        'tdelays': t_d.copy(),
-        'r2': np.zeros((len(t_d), len(t_cut)))
+        'r2': np.zeros(len(t_cut))
     }
     for param in params:
-        scan_res[param] = np.zeros((2*len(t_d), len(t_cut)))
+        scan_res[param] = np.zeros((2,len(t_cut)))
 
-    for j in range(len(t_d)):
+    # Make new input function from this delay:
+    input_time = time_data + t_d
 
-        # Make new input function from this delay:
-        input_time = time_data + t_d[j]
+    for i in range(len(t_cut)):
+        # Iterate over tcuts
 
-        for i in range(len(t_cut)):
-            # Iterate over tcuts
+        # Create lmfit Parameters-object
+        parameters = lmfit.create_params(**params)
 
-            # Create lmfit Parameters-object
-            parameters = lmfit.create_params(**params)
+        # Define model to fit
+        fit_model = lmfit.Model(model,
+                                independent_vars=['t_in', 'in_func',
+                                                  't_out'])
 
-            # Define model to fit
-            fit_model = lmfit.Model(model,
-                                    independent_vars=['t_in', 'in_func',
-                                                      't_out'])
+        # Run fit from initial values
+        res = fit_model.fit(tissue_data[0:t_cut[i]],
+                            t_in=input_time[0:t_cut[i]],
+                            in_func=input_data[0:t_cut[i]],
+                            t_out=time_data[0:t_cut[i]],
+                            params=parameters)
 
-            # Run fit from initial values
-            res = fit_model.fit(tissue_data[0:t_cut[i]],
-                                t_in=input_time[0:t_cut[i]],
-                                in_func=input_data[0:t_cut[i]],
-                                t_out=time_data[0:t_cut[i]],
-                                params=parameters)
+        if single_fit:
+            # Report and plot result of fit
 
-            if single_fit:
-                # Report and plot result of fit
+            lmfit.report_fit(res)
+            # Calculate best fitting model
+            best_fit = model(t_in=input_time,  # type: ignore
+                             in_func=input_data,
+                             t_out=time_data[0:t_cut[i]],
+                             **res.best_values)
 
-                lmfit.report_fit(res)
-                # Calculate best fitting model
-                best_fit = model(t_in=input_time[0:t_cut[i]],  # type: ignore
-                                 in_func=input_data[0:t_cut[i]],
-                                 t_out=time_data[0:t_cut[i]],
-                                 **res.best_values)
+            fig, ax = plt.subplots()
+            ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
+            ax.plot(input_time, input_data, 'rx--', label=labels['input'])
+            ax.plot(time_data[0:t_cut[i]], best_fit, 'k-', label="Fit")
 
-                fig, ax = plt.subplots()
-                ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
-                ax.plot(input_time, input_data, 'rx--', label=labels['input'])
-                ax.plot(time_data[0:t_cut[i]], best_fit, 'k-', label="Fit")
+            ax.set_xlabel('Time [sec]')
+            ax.set_ylabel('Mean ROI-activity concentration')
 
-                ax.set_xlabel('Time [sec]')
-                ax.set_ylabel('Mean ROI-activity concentration')
-
-                plt.legend()
-                plt.grid(visible=True)
-                if output is None:
-                    plt.show()
-                else:
-                    fit_png_path = os.path.join(output, "fit.png")
-                    plt.savefig(fit_png_path)
-                    plt.clf()
-
+            plt.legend()
+            plt.grid(visible=True)
+            if output is None:
+                plt.show()
             else:
-                # Save results of fit before moving on to next tcut
-                for param in params:
-                    scan_res[param][2*j][i] = res.params[param].value
-                    scan_res[param][2*j+1][i] = res.params[param].stderr
-                scan_res['r2'][j][i] = res.rsquared
+                fit_png_path = os.path.join(output, "fit.png")
+                plt.savefig(fit_png_path)
+                plt.clf()
+
+        else:
+            # Save results of fit before moving on to next tcut
+            for param in params:
+                scan_res[param][0][i] = res.params[param].value
+                scan_res[param][1][i] = res.params[param].stderr
+            scan_res['r2'][i] = res.rsquared
 
     if not single_fit:
         # Make a plot showing the fit scan
         n_params = len(params)
 
         # Plot
-        fig, ax = plt.subplots(nrows=(n_params+1),
-                               ncols=len(t_d))
-        for j in range(len(t_d)):
-            i = 0
-            for param in params:
-                if i == 0:
-                    ax[i,j].set_title(f'td = {t_d[j]}')
-                if j == 0:
-                    ax[i,j].set_ylabel(param)
-                ax[i,j].errorbar(
-                    scan_res['tcuts'],
-                    scan_res[param][2*j],
-                    yerr=scan_res[param][2*j+1],
-                    fmt='s',
-                    capsize=4
-                )
-                ax[i,j].grid(True)
-
-                i = i + 1
-
-            if j == 0:
-                ax[i,j].set_ylabel('r^2')
-            ax[i,j].scatter(
+        fig, ax = plt.subplots(nrows=(n_params+1))
+        i = 0
+        for param in params:
+            ax[i].set_ylabel(param)
+            ax[i].errorbar(
                 scan_res['tcuts'],
-                scan_res['r2'][j],
-                marker='x'
+                scan_res[param][0],
+                yerr=scan_res[param][1],
+                fmt='s',
+                capsize=4
             )
-            ax[i, j].set_ylim(bottom=0.95, top=1.0)
-            ax[i, j].set_yticks(np.arange(0.95, 1.0, 0.01))
-            ax[i, j].set_yticks(np.arange(0.95, 1.0, 0.002), minor=True)
-            ax[i,j].grid(which='major', alpha=0.5)
-            ax[i, j].grid(axis='y', which='minor', alpha=0.2)
+            ax[i].grid(True)
 
+            i = i + 1
+
+        ax[i].set_ylabel('r^2')
+        ax[i].scatter(
+            scan_res['tcuts'],
+            scan_res['r2'],
+            marker='x'
+        )
+        ax[i].set_ylim(bottom=0.95, top=1.0)
+        ax[i].set_yticks(np.arange(0.95, 1.0, 0.01))
+        ax[i].set_yticks(np.arange(0.95, 1.0, 0.002), minor=True)
+        ax[i].grid(which='major', alpha=0.5)
+        ax[i].grid(axis='y', which='minor', alpha=0.2)
 
         plt.show()
 
