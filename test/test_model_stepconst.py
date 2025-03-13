@@ -3,6 +3,26 @@ import numpy as np
 import unittest
 
 
+class TestSplitArrays(unittest.TestCase):
+
+    def test_split_1(self):
+        ts = np.array([1.0, 2.0, 3.0, 4.0])
+        fs = np.array([0.0, 1.0, 1.0, 2.0])
+        t = 3.5
+        tc = 1.0
+
+        arr1, arr2, arr3, arr4 = stepconst._split_arrays(ts, fs, t, tc)
+        arr1_exp = np.array([0.0, 1.0, 2.0, 2.5])
+        arr2_exp = np.array([0.0, 0.0, 1.0, 1.0])
+        arr3_exp = np.array([2.5, 3.0, 3.5])
+        arr4_exp = np.array([1.0, 1.0, 1.5])
+
+        self.assertTrue(np.all(np.abs(arr1 - arr1_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr2 - arr2_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr3 - arr3_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
+
+
 class TestModelStep2(unittest.TestCase):
 
     def test_model_step2_case1(self):

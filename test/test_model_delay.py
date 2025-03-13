@@ -18,8 +18,6 @@ class TestModelDelay(unittest.TestCase):
                                t_in=tin, in_func=in_func,
                                t_out=t_out)
 
-        print(m)
-
         m_exp = np.array([0.0, 5.85, 51.45])
 
         self.assertTrue(np.all(np.abs(m - m_exp) < 0.01))

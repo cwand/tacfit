@@ -130,8 +130,6 @@ def main(sys_args: list[str]):
     tdelay = None
     if args.delay:
         tdelay = args.delay
-        if len(tdelay) == 1:
-            tdelay = tdelay[0]
         print(f'Using delay = {tdelay} s.')
     else:
         print("No delay set, using delay = 0 s.")

@@ -3,6 +3,42 @@ import numpy as np
 import scipy
 
 
+def _split_arrays(t_in: npt.NDArray[np.float64],
+                  in_func: npt.NDArray[np.float64],
+                  t: float,
+                  tc: float) -> tuple[npt.NDArray[np.float64], ...]:
+    # Split a time array and a function array into two separate arrays.
+    # Given the arrays
+    #   t_in = [t_0, t_1, ..., t_n]
+    #   in_func = [f_0, f_1, ..., f_n]
+    # this function returns the arrays:
+    # - [0, t_0, t_1, ..., t_k, tx]
+    # - [f*(0), f_0, f_1, ..., f*(tx)]
+    # - [tx, t_k+1, t_k+2, ..., t_l, t]
+    # - [f*(tx), f_k+1, f_k+2, ..., f_l, f*(t)]
+    # where tx = t - tc, t_k is the largest element in t_in smaller than tx,
+    # tl is the largest element in t_in smaller than t and f*(x) indicates the
+    # interpolated value of in_func at x.
+
+    arr1 = t_in[t_in < (t - tc)]
+    arr1 = np.append([0.0], arr1)
+    arr1 = np.append(arr1, t - tc)
+
+    arr2 = in_func[t_in < (t - tc)]
+    arr2 = np.append([0.0], arr2)
+    arr2 = np.append(arr2, np.interp(t - tc, t_in, in_func))
+
+    arr3 = t_in[np.logical_and(t_in > (t - tc), t_in < t)]
+    arr3 = np.append([t - tc], arr3)
+    arr3 = np.append(arr3, t)
+
+    arr4 = in_func[np.logical_and(t_in > (t - tc), t_in < t)]
+    arr4 = np.append([np.interp(t - tc, t_in, in_func)], arr4)
+    arr4 = np.append(arr4, np.interp(t, t_in, in_func))
+
+    return arr1, arr2, arr3, arr4
+
+
 def model_stepconst(t_in: npt.NDArray[np.float64],
                     in_func: npt.NDArray[np.float64],
                     t_out: npt.NDArray[np.float64],
@@ -15,8 +51,8 @@ def model_stepconst(t_in: npt.NDArray[np.float64],
     [extent1, infinity).
     The convolution is evaluated at the time points given in t_out and
     returned as a list.
-    The convolution is performed numerically using scipy.integrate.quad and
-    the input function is interpolated linearly between sample points.
+    The convolution is performed numerically using scipy.integrate.trapezoid
+    and the input function is interpolated linearly between sample points.
 
     Arguments:
     t_in    --  The time points of the input function samples.
@@ -37,42 +73,18 @@ def model_stepconst(t_in: npt.NDArray[np.float64],
     amp1 = kwargs['amp1']
     amp2 = kwargs['amp2']
 
-    # The function to be integrated is just the amplitudes times the integral
-    # of the input function. The amplitudes will be multiplied after
-    # integration.
-    def integrand(tau: float):
-        return np.interp(tau, t_in, in_func, left=0.0)
-
     for i in range(0, res.size):
         # For each time point the integrand is integrated.
 
         # Get current time point
         ti = t_out[i]
 
-        # We split the integral up at the discontinuity point at t=extent1.
-        # We increase the maximum subdivision limit to avoid discontinuity
-        # problems.
-
-        # We slacken the error tolerance for faster fits and to avoid warnings
-        # about roundoff errors.
-
-        # First integral from 0 to max(0, t-ext1)
-        y1 = scipy.integrate.quad(integrand,
-                                  0.0,
-                                  max(0.0, ti - ext1),
-                                  limit=500,
-                                  epsabs=0.001,
-                                  epsrel=0.001)
-
-        # Second integral from max(0, t-ext1) to t
-        y2 = scipy.integrate.quad(integrand,
-                                  max(0.0, ti - ext1),
-                                  ti,
-                                  limit=500,
-                                  epsabs=0.001,
-                                  epsrel=0.001)
+        # We split the integral up at the discontinuity point at t=ti - extent1
+        t1, f1, t2, f2 = _split_arrays(t_in, in_func, ti, ext1)
+        y1 = scipy.integrate.trapezoid(f1, t1)
+        y2 = scipy.integrate.trapezoid(f2, t2)
 
         # Multiply by the amplitudes
-        res[i] = amp2 * y1[0] + amp1 * y2[0]
+        res[i] = amp2 * y1 + amp1 * y2
 
     return res
