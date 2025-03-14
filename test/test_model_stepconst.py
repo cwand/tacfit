@@ -34,15 +34,63 @@ class TestSplitArrays(unittest.TestCase):
         arr3_exp = np.array([0.0, 1.0, 2.0, 2.5])
         arr4_exp = np.array([0.0, 0.0, 1.0, 1.0])
 
-        print(arr1)
-        print(arr2)
-        print(arr3)
-        print(arr4)
+        self.assertTrue(np.all(np.abs(arr1 - arr1_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr2 - arr2_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr3 - arr3_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
+
+    def test_split_t_smaller_than_first_time(self):
+        ts = np.array([1.0, 2.0, 3.0, 4.0])
+        fs = np.array([0.0, 1.0, 1.0, 2.0])
+        t = 0.5
+        tc = 1.0
+
+        arr1, arr2, arr3, arr4 = stepconst._split_arrays(ts, fs, t, tc)
+        arr1_exp = np.array([0.0, 0.0])
+        arr2_exp = np.array([0.0, 0.0])
+        arr3_exp = np.array([0.0, 0.5])
+        arr4_exp = np.array([0.0, 0.0])
 
         self.assertTrue(np.all(np.abs(arr1 - arr1_exp) < 0.0000001))
         self.assertTrue(np.all(np.abs(arr2 - arr2_exp) < 0.0000001))
         self.assertTrue(np.all(np.abs(arr3 - arr3_exp) < 0.0000001))
         self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
+
+    def test_split_interp_left(self):
+        ts = np.array([1.0, 2.0, 3.0, 4.0])
+        fs = np.array([1.0, 2.0, 1.0, 2.0])
+        t = 1.5
+        tc = 1.0
+
+        arr1, arr2, arr3, arr4 = stepconst._split_arrays(ts, fs, t, tc)
+        arr1_exp = np.array([0.0, 0.5])
+        arr2_exp = np.array([0.0, 0.0])
+        arr3_exp = np.array([0.5, 1.0, 1.5])
+        arr4_exp = np.array([0.0, 1.0, 1.5])
+
+        self.assertTrue(np.all(np.abs(arr1 - arr1_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr2 - arr2_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr3 - arr3_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
+
+    def test_split_interp_left_all(self):
+        ts = np.array([1.0, 2.0, 3.0, 4.0])
+        fs = np.array([1.0, 2.0, 1.0, 2.0])
+        t = 0.5
+        tc = 1.0
+
+        arr1, arr2, arr3, arr4 = stepconst._split_arrays(ts, fs, t, tc)
+        arr1_exp = np.array([0.0, 0.0])
+        arr2_exp = np.array([0.0, 0.0])
+        arr3_exp = np.array([0.0, 0.5])
+        arr4_exp = np.array([0.0, 0.0])
+
+        self.assertTrue(np.all(np.abs(arr1 - arr1_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr2 - arr2_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr3 - arr3_exp) < 0.0000001))
+        self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
+
+
 
 
 

@@ -16,25 +16,26 @@ def _split_arrays(t_in: npt.NDArray[np.float64],
     # - [f*(0), f_0, f_1, ..., f*(tx)]
     # - [tx, t_k+1, t_k+2, ..., t_l, t]
     # - [f*(tx), f_k+1, f_k+2, ..., f_l, f*(t)]
-    # where tx = t - tc, t_k is the largest element in t_in smaller than tx,
-    # tl is the largest element in t_in smaller than t and f*(x) indicates the
-    # interpolated value of in_func at x.
+    # where tx = max(0,t - tc), t_k is the largest element in t_in smaller
+    # than tx (if any), tl is the largest element in t_in smaller than t (if
+    # any) and f*(x) indicates the interpolated value of in_func at x.
 
-    arr1 = t_in[t_in < (t - tc)]
+    tx = max(0.0, t - tc)
+    arr1 = t_in[t_in < tx]
     arr1 = np.append([0.0], arr1)
-    arr1 = np.append(arr1, t - tc)
+    arr1 = np.append(arr1, tx)
 
-    arr2 = in_func[t_in < (t - tc)]
+    arr2 = in_func[t_in < tx]
     arr2 = np.append([0.0], arr2)
-    arr2 = np.append(arr2, np.interp(t - tc, t_in, in_func))
+    arr2 = np.append(arr2, np.interp(tx, t_in, in_func, left=0.0))
 
-    arr3 = t_in[np.logical_and(t_in > (t - tc), t_in < t)]
-    arr3 = np.append([t - tc], arr3)
+    arr3 = t_in[np.logical_and(t_in > tx, t_in < t)]
+    arr3 = np.append([tx], arr3)
     arr3 = np.append(arr3, t)
 
-    arr4 = in_func[np.logical_and(t_in > (t - tc), t_in < t)]
-    arr4 = np.append([np.interp(t - tc, t_in, in_func)], arr4)
-    arr4 = np.append(arr4, np.interp(t, t_in, in_func))
+    arr4 = in_func[np.logical_and(t_in > tx, t_in < t)]
+    arr4 = np.append([np.interp(tx, t_in, in_func, left=0.0)], arr4)
+    arr4 = np.append(arr4, np.interp(t, t_in, in_func, left=0.0))
 
     return arr1, arr2, arr3, arr4
 
