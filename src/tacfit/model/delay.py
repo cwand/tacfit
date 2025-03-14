@@ -36,23 +36,25 @@ def model_delay(t_in: npt.NDArray[np.float64],
     # Make delayed input function time data
     input_time_dly = t_in + delay
 
-    # The function to be integrated is just the constant times the integral
-    # of the input function. The amplitudes will be multiplied after
-    # integration. We assume the input function is 0 before the first time
-    # point
-    def integrand(tau: float):
-        return np.interp(tau, input_time_dly, in_func, left=0)
-
     for i in range(0, res.size):
         # For each time point the integrand is integrated.
 
         # Get current time point
         ti = t_out[i]
 
-        # Calculate integral
-        y1 = scipy.integrate.quad(integrand, 0, ti)
+        # We use trapzeoids to calculate integral of input, but first we need
+        # to split the array
+        t = [0.0]
+        t = np.append(t, input_time_dly[input_time_dly < ti])
+        t = np.append(t, ti)
+
+        f = [0.0]
+        f = np.append(f, in_func[input_time_dly < ti])
+        f = np.append(f, np.interp(ti, input_time_dly, in_func, left=0.0))
+
+        y1 = scipy.integrate.trapezoid(f, t)
 
         # Multiply by the amplitudes
-        res[i] = k * y1[0]
+        res[i] = k * y1
 
     return res
