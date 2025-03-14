@@ -78,10 +78,6 @@ def main(sys_args: list[str]):
     parser.add_argument("--list_models", action='store_true',
                         help="List all available models and their "
                              "parameters.")
-    parser.add_argument("--early", metavar="N", type=int,
-                        help="Make analysis of early data to estimate optimal "
-                             "input function delay. The first N data points "
-                             "are used in the analysis.")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
     parser.add_argument("--save_figs", nargs=1, metavar="PATH",
