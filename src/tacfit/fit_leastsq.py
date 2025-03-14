@@ -134,11 +134,12 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         else:
             # Save results of fit before moving on to next tcut
             for param in params:
-                scan_res[param_idx[param]][i] = res.params[param].value
-                scan_res[param_idx[param] + 1][i] = res.params[param].stderr
+                scan_res[2*param_idx[param]][i] = res.params[param].value
+                scan_res[2*param_idx[param] + 1][i] = res.params[param].stderr
             r2s[i] = res.rsquared
 
     if not single_fit:
+
         # Make a plot showing the fit scan
         n_params = len(params)
 
@@ -149,8 +150,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             axs[i].set_ylabel(param)
             axs[i].errorbar(
                  t_cut,
-                 scan_res[param_idx[param]],
-                 yerr=scan_res[param_idx[param] + 1],
+                 scan_res[2*param_idx[param]],
+                 yerr=scan_res[2*param_idx[param] + 1],
                  fmt='s',
                  capsize=4
             )
@@ -159,6 +160,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             i = i + 1
 
         axs[i].set_ylabel('r^2')
+        axs[i].set_xlabel('tcut')
         axs[i].scatter(
              t_cut,
              r2s,
