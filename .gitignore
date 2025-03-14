@@ -114,6 +114,8 @@ fabric.properties
 # https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
 .idea/**/azureSettings.xml
 
+.idea/inspectionProfiles/
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
