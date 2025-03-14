@@ -3,6 +3,47 @@ import numpy.typing as npt
 import scipy
 
 
+def _split_arrays(t_in: npt.NDArray[np.float64],
+                  in_func: npt.NDArray[np.float64],
+                  t: float,
+                  tc1: float,
+                  tc2: float) -> tuple[npt.NDArray[np.float64], ...]:
+    # Split a time array and a function array into two separate arrays.
+    # Given the arrays
+    #   t_in = [t_0, t_1, ..., t_n]
+    #   in_func = [f_0, f_1, ..., f_n]
+    # this function returns the arrays:
+    # - [tx1, t_k, t_k+1, ..., t_l, tx2]
+    # - [f*(tx1), f_k, f_k+1, ..., f_l, f*(tx2)]
+    # - [tx2, t_l+1, t_l+2, ..., t_m, t]
+    # - [f*(tx2), f_l+1, f_l+2, ..., f_m, f*(t)]
+    # where tx1 = max(0,t - tc1), tx2 = max(0,t - tc2), t_k is the smallest
+    # element in t_in larger than tx1 (if any), tl is the largest element
+    # in t_in smaller than tx2 (if any), t_m is the largest element in t_in
+    # smaller than t (if any) and f*(x) indicates the interpolated value of
+    # in_func at x.
+
+    tx1 = max(0.0, t - tc1)
+    tx2 = max(0.0, t - tc2)
+    arr1 = t_in[np.logical_and(t_in > tx1, t_in < tx2)]
+    arr1 = np.append([tx1], arr1)
+    arr1 = np.append(arr1, tx2)
+
+    arr2 = in_func[np.logical_and(t_in > tx1, t_in < tx2)]
+    arr2 = np.append([np.interp(tx1, t_in, in_func, left=0.0)], arr2)
+    arr2 = np.append(arr2, np.interp(tx2, t_in, in_func, left=0.0))
+
+    arr3 = t_in[np.logical_and(t_in > tx2, t_in < t)]
+    arr3 = np.append([tx2], arr3)
+    arr3 = np.append(arr3, t)
+
+    arr4 = in_func[np.logical_and(t_in > tx2, t_in < t)]
+    arr4 = np.append([np.interp(tx2, t_in, in_func, left=0.0)], arr4)
+    arr4 = np.append(arr4, np.interp(t, t_in, in_func, left=0.0))
+
+    return arr1, arr2, arr3, arr4
+
+
 def model_step2(t_in: npt.NDArray[np.float64],
                 in_func: npt.NDArray[np.float64],
                 t_out: npt.NDArray[np.float64],
