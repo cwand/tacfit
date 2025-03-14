@@ -179,7 +179,7 @@ def main(sys_args: list[str]):
             print(f'     max:   {param_max}')
     else:
         print("No model parameters specified.")
-        params = None
+        params = {}
     print()
 
     # Set RNG-seed if chosen
@@ -208,7 +208,6 @@ def main(sys_args: list[str]):
                            tcut=tcut,
                            delay=tdelay)
         print()
-
 
     # Monte Carlo sampling if required
     # if args.mcpost:

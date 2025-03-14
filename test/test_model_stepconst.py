@@ -91,9 +91,6 @@ class TestSplitArrays(unittest.TestCase):
         self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
 
 
-
-
-
 class TestModelStep2(unittest.TestCase):
 
     def test_model_step2_case1(self):

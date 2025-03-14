@@ -1,11 +1,10 @@
-from shutil import which
-
 import lmfit
 import matplotlib.pyplot as plt
 from typing import Callable, Optional
 import numpy as np
 import numpy.typing as npt
 import os
+
 
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
@@ -75,16 +74,17 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         # A float was given as tcut: use as single value
         t_d = delay
 
-    # Create container for results if running in multi_fit mode
-    scan_res = {
-        'tcuts': t_cut.copy(),
-        'r2': np.zeros(len(t_cut))
-    }
-    for param in params:
-        scan_res[param] = np.zeros((2,len(t_cut)))
-
     # Make new input function from this delay:
     input_time = time_data + t_d
+
+    # Make arrays for multi-fit mode
+    param_idx = {}
+    idx = 0
+    for param in params:
+        param_idx[param] = idx
+        idx = idx + 1
+    r2s = np.zeros(len(t_cut))
+    scan_res = np.zeros((2*len(params), len(t_cut)))
 
     for i in range(len(t_cut)):
         # Iterate over tcuts
@@ -134,41 +134,40 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         else:
             # Save results of fit before moving on to next tcut
             for param in params:
-                scan_res[param][0][i] = res.params[param].value
-                scan_res[param][1][i] = res.params[param].stderr
-            scan_res['r2'][i] = res.rsquared
+                scan_res[param_idx[param]][i] = res.params[param].value
+                scan_res[param_idx[param] + 1][i] = res.params[param].stderr
+            r2s[i] = res.rsquared
 
     if not single_fit:
         # Make a plot showing the fit scan
         n_params = len(params)
 
         # Plot
-        fig, ax = plt.subplots(nrows=(n_params+1))
+        fig, axs = plt.subplots(nrows=(n_params+1))
         i = 0
         for param in params:
-            ax[i].set_ylabel(param)
-            ax[i].errorbar(
-                scan_res['tcuts'],
-                scan_res[param][0],
-                yerr=scan_res[param][1],
-                fmt='s',
-                capsize=4
+            axs[i].set_ylabel(param)
+            axs[i].errorbar(
+                 t_cut,
+                 scan_res[param_idx[param]],
+                 yerr=scan_res[param_idx[param] + 1],
+                 fmt='s',
+                 capsize=4
             )
-            ax[i].grid(True)
+            axs[i].grid(True)
 
             i = i + 1
 
-        ax[i].set_ylabel('r^2')
-        ax[i].scatter(
-            scan_res['tcuts'],
-            scan_res['r2'],
-            marker='x'
+        axs[i].set_ylabel('r^2')
+        axs[i].scatter(
+             t_cut,
+             r2s,
+             marker='x'
         )
-        ax[i].set_ylim(bottom=0.95, top=1.0)
-        ax[i].set_yticks(np.arange(0.95, 1.0, 0.01))
-        ax[i].set_yticks(np.arange(0.95, 1.0, 0.002), minor=True)
-        ax[i].grid(which='major', alpha=0.5)
-        ax[i].grid(axis='y', which='minor', alpha=0.2)
+        axs[i].set_ylim(bottom=0.95, top=1.0)
+        axs[i].set_yticks(np.arange(0.95, 1.0, 0.01))
+        axs[i].set_yticks(np.arange(0.95, 1.0, 0.002), minor=True)
+        axs[i].grid(which='major', alpha=0.5)
+        axs[i].grid(axis='y', which='minor', alpha=0.2)
 
         plt.show()
-

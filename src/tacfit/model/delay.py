@@ -44,11 +44,11 @@ def model_delay(t_in: npt.NDArray[np.float64],
 
         # We use trapzeoids to calculate integral of input, but first we need
         # to split the array
-        t = [0.0]
+        t = np.array([0.0])
         t = np.append(t, input_time_dly[input_time_dly < ti])
         t = np.append(t, ti)
 
-        f = [0.0]
+        f = np.array([0.0])
         f = np.append(f, in_func[input_time_dly < ti])
         f = np.append(f, np.interp(ti, input_time_dly, in_func, left=0.0))
 
