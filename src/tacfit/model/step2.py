@@ -92,29 +92,12 @@ def model_step2(t_in: npt.NDArray[np.float64],
         # Get current time point
         ti = t_out[i]
 
-        # We split the integral up into the two step-functions and increase
-        # the maximum subdivision limit to avoid discontinuity problems
-
-        # We slacken the error tolerance for faster fits and to avoid warnings
-        # about roundoff errors.
-
-        # First integral from max(0, t-ext2) to max(0, t-ext1)
-        y1 = scipy.integrate.quad(integrand,
-                                  max(0.0, ti - ext2),
-                                  max(0.0, ti - ext1),
-                                  limit=500,
-                                  epsabs=0.001,
-                                  epsrel=0.001)
-
-        # Second integral from max(0, t-ext1) to t
-        y2 = scipy.integrate.quad(integrand,
-                                  max(0.0, ti - ext1),
-                                  ti,
-                                  limit=500,
-                                  epsabs=0.001,
-                                  epsrel=0.001)
+        # We split the integral up into the two step-functions
+        t1, f1, t2, f2 = _split_arrays(t_in, in_func, ti, ext2, ext1)
+        y1 = scipy.integrate.trapezoid(f1, t1)
+        y2 = scipy.integrate.trapezoid(f2, t2)
 
         # Multiply by the amplitudes
-        res[i] = amp2*y1[0] + amp1*y2[0]
+        res[i] = amp2*y1 + amp1*y2
 
     return res
