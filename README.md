@@ -75,29 +75,19 @@ The list of implemented models and their descriptions can be seen by using the
 ```--list_models``` option.
 
 #### The stepconst model
-In this model, the impulse response function $R(t)$ is
-$$
-R(t) =
-\begin{cases}
-\mathrm{amp1} \; , & t < \mathrm{extent1},\\
-\mathrm{amp2} \; , & \mathrm{extent1} \leq t.
-\end{cases}
-$$
-This models are situation where the tracer flows through the tissue in some transit time
+In this model, the impulse response function $R(t)$ is\
+$$R(t) = \mathrm{amp1}, \quad t < \mathrm{extent1}$$\
+$$R(t) = \mathrm{amp2}, \quad t \geq \mathrm{extent1}$$\
+This models the situation where the tracer flows through the tissue in some transit time, and
 some fraction is extracted by the tissue and stays in the tissue forever.
 
 #### The step2 model
 An extension of the ```stepconst``` model, where the impulse response function drops to 0 after some
-time $\mathrm{extent2}$:
-$$
-R(t) =
-\begin{cases}
-\mathrm{amp1} \; , & t < \mathrm{extent1},\\
-\mathrm{amp2} \; , & \mathrm{extent1} \leq t < \mathrm{extent2},\\
-0 \; , & \mathrm{extent2} \leq t,
-\end{cases}
-$$
-This models are situation where the tracer flows through the tissue in some transit time
+time $\mathrm{extent2}$:\
+$$R(t) = \mathrm{amp1}, \quad t < \mathrm{extent1}$$\
+$$R(t) = \mathrm{amp2}, \quad \mathrm{extent1} \leq t < \mathrm{extent2}$$\
+$$R(t) = 0, \quad t \geq \mathrm{extent2}$$\
+This models a situation where the tracer flows through the tissue in some transit time,
 some fraction is extracted by the tissue and stays in the tissue for some time
 and then leaves the tissue.
 
