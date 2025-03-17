@@ -67,10 +67,15 @@ def main(sys_args: list[str]):
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
-    # parser.add_argument("--mcpost", nargs=5, type=int,
-    #                    metavar=("STEPS", "WALKERS", "BURN", "THIN", "POOL"),
-    #                    help="Make a Monte Carlo sampling of the posterior "
-    #                         "parameter probability distribution function.")
+    parser.add_argument("--mcpost", action='store_true',
+                        help="Make a Monte Carlo sampling of the posterior "
+                             "parameter probability distribution function.")
+    parser.add_argument("--mc_steps", type=int, metavar="STEPS",
+                        help="Number of Monte Carlo steps (required when "
+                             "using --mc_steps.")
+    parser.add_argument("--mc_walkers", type=int, metavar="WALKERS",
+                        help="Number of walker in the Monte Carlo search "
+                             "(required when using --mc_steps.")
     parser.add_argument("--rng_seed", type=int,
                         help="Set the RNG seed. If no seed is provided the "
                              "seed will be set automatically from "
