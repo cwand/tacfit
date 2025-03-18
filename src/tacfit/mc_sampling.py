@@ -248,15 +248,16 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         smpl_params = {}
         for i in range(len(param_names)):
             smpl_params[param_names[i]] = sample[i]
-        smpl_model = model(time_data[0:tcut],  # type: ignore
-                           input_data[0:tcut],
+        smpl_model = model(input_time_cut,  # type: ignore
+                           input_data_cut,
+                           time_data_cut,
                            **smpl_params)
-        ax.plot(time_data[0:tcut], smpl_model, "C1", alpha=0.1)
+        ax.plot(time_data_cut, smpl_model, "C1", alpha=0.1)
 
-    ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
-    ax.plot(time_data, input_data, 'rx--', label=labels['input'])
-    ax.plot(time_data[0:tcut], ml50_fit, 'b-', label="ML50 Fit")
-    ax.plot(time_data[0:tcut], original_fit, 'k-', label="Original Fit")
+    ax.plot(time_data_cut, tissue_data_cut, 'gx', label=labels['tissue'])
+    ax.plot(time_data_cut, input_data_cut, 'rx--', label=labels['input'])
+    ax.plot(time_data_cut, ml50_fit, 'b-', label="ML50 Fit")
+    ax.plot(time_data_cut, original_fit, 'k-', label="Original Fit")
 
     ax.set_xlabel('Time [sec]')
     ax.set_ylabel('Mean ROI-activity concentration [Bq/mL]')
