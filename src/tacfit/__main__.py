@@ -256,7 +256,8 @@ def main(sys_args: list[str]):
                          args.mc_burn,
                          args.mc_thin,
                          output=output,
-                         tcut=tcut)
+                         tcut=tcut,
+                         delay=tdelay)
         print()
 
     # Plot data if required
