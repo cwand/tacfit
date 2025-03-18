@@ -232,7 +232,7 @@ def main(sys_args: list[str]):
     if args.mcpost:
         print("Starting Monte Calor sampling.")
         print("Monte Carlo parameters:")
-        print(f'  errors:  {args.mc_errors}')
+        print(f'  errors:  {args.mc_error}')
         print(f'  steps:   {args.mc_steps}')
         print(f'  walkers: {args.mc_walkers}')
         print(f'  burn:    {args.mc_burn}')
@@ -249,7 +249,7 @@ def main(sys_args: list[str]):
                           'input': args.input_label},
                          models[model_str]['func'],  # type: ignore
                          params,
-                         args.mc_errors,
+                         args.mc_error,
                          args.mc_steps,
                          args.mc_walkers,
                          args.mc_threads,
