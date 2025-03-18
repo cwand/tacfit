@@ -70,12 +70,22 @@ def main(sys_args: list[str]):
     parser.add_argument("--mcpost", action='store_true',
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
-    parser.add_argument("--mc_steps", type=int, metavar="STEPS",
-                        help="Number of Monte Carlo steps (required when "
-                             "using --mc_steps.")
-    parser.add_argument("--mc_walkers", type=int, metavar="WALKERS",
-                        help="Number of walker in the Monte Carlo search "
-                             "(required when using --mc_steps.")
+    parser.add_argument("--mc_steps", type=int, metavar="S",
+                        help="Apply the monte carlo step algorithm S times "
+                             "(required when using --mcpost.")
+    parser.add_argument("--mc_walkers", type=int, metavar="W",
+                        help="Use W walkers in the monte carlo search "
+                             "(required when using --mcpost.")
+    parser.add_argument("--mc_burn", type=int, metavar="B",
+                        help="Discard B steps from the chain as burn-in "
+                             "(required when using --mcpost).")
+    parser.add_argument("--mc_thin", type=int, metavar="T",
+                        help="Only keep every Tth step in the chain, "
+                             "discarding the rest to reduce autocorrelation ("
+                             "required when using --mcpost).")
+    parser.add_argument("--mc_threads", type=int, metavar="N",
+                        help="Use N threads to run the monte carlo search ("
+                             "required when using --mcpost).")
     parser.add_argument("--rng_seed", type=int,
                         help="Set the RNG seed. If no seed is provided the "
                              "seed will be set automatically from "
@@ -215,31 +225,33 @@ def main(sys_args: list[str]):
         print()
 
     # Monte Carlo sampling if required
-    # if args.mcpost:
-    #    print("Starting Monte Calor sampling.")
-    #    mc_opts = args.mcpost
-    #    print("Monte Carlo parameters:")
-    #    print(f'  steps:   {mc_opts[0]}')
-    #    print(f'  walkers: {mc_opts[1]}')
-    #    print(f'  burn:    {mc_opts[2]}')
-    #    print(f'  thin:    {mc_opts[3]}')
-    #    print(f'  threads: {mc_opts[4]}')
-    #    if args.save_figs is None:
-    #        output = None
-    #    else:
-    #        output = args.save_figs[0]
-    #    tacfit.mc_sample(tac[args.time_label],
-    #                     tac[args.tissue_label],
-    #                     tac[args.input_label],
-    #                     {'tissue': args.tissue_label,
-    #                      'input': args.input_label},
-    #                     models[model_str]['func'],  # type: ignore
-    #                     params,
-    #                    mc_opts[0], mc_opts[1], mc_opts[4],
-    #                     mc_opts[2], mc_opts[3],
-    #                     output=output,
-    #                     tcut=tcut)
-    #    print()
+    if args.mcpost:
+       print("Starting Monte Calor sampling.")
+       print("Monte Carlo parameters:")
+       print(f'  steps:   {args.mc_steps}')
+       print(f'  walkers: {args.mc_walkers}')
+       print(f'  burn:    {args.mc_burn}')
+       print(f'  thin:    {args.mc_thin}')
+       print(f'  threads: {args.mc_threads}')
+       if args.save_figs is None:
+           output = None
+       else:
+           output = args.save_figs[0]
+       tacfit.mc_sample(tac[args.time_label],
+                        tac[args.tissue_label],
+                        tac[args.input_label],
+                        {'tissue': args.tissue_label,
+                         'input': args.input_label},
+                        models[model_str]['func'],  # type: ignore
+                        params,
+                        args.mc_steps,
+                        args.mc_walkers,
+                        args.mc_threads,
+                        args.mc_burn,
+                        args.mc_thin,
+                        output=output,
+                        tcut=tcut)
+       print()
 
     # Plot data if required
     if args.plot_nofit:
@@ -247,7 +259,7 @@ def main(sys_args: list[str]):
         if args.save_figs is None:
             output = None
         else:
-            output = os.path.join(args.save_figs[0], "plot_nogit.png")
+            output = os.path.join(args.save_figs[0], "plot_nofit.png")
         tacfit.plot_tac(tac[args.time_label],
                         tac[args.input_label],
                         tac[args.tissue_label],
