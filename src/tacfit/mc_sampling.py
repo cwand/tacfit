@@ -104,6 +104,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               labels: dict[str, str],
               model: Callable[[npt.NDArray[np.float64],
                                npt.NDArray[np.float64],
+                               npt.NDArray[np.float64],
                                dict[str, float]],
                               npt.NDArray[np.float64]],
               params: dict[str, dict[str, float]],
@@ -230,11 +231,13 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         original_values[param_names[i]] = param_start[i]
 
     fig, ax = plt.subplots()
-    ml50_fit = model(time_data[0:tcut],  # type: ignore
-                     input_data[0:tcut],
+    ml50_fit = model(input_time_cut,  # type: ignore
+                     input_data_cut,
+                     time_data_cut,
                      **ml50)
-    original_fit = model(time_data[0:tcut],  # type: ignore
-                         input_data[0:tcut],
+    original_fit = model(input_time_cut,  # type: ignore
+                         input_data_cut,
+                         time_data_cut,
                          **original_values)
 
     # Pick 100 random samples and plot the projection to illustrate
