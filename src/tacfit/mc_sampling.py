@@ -38,6 +38,28 @@ def _log_prob_uconst(data: npt.NDArray[np.float64],
     return float(cont1 + cont2)
 
 
+def _init_walkers(start_position: npt.NDArray[np.float64],
+                  param_bounds: npt.NDArray[np.float64],
+                  n_walkers: int) -> npt.NDArray[np.float64]:
+    # Initialise a set of walkers. Each walker is assigned a uniformly
+    # random position in the parameter space. The points will be centered
+    # around the start_position, and no points will be closer to the parameter
+    # bound that halfway from the start_position:
+    #     |      ..x..  |
+    #  |  .x. |
+    #        |     .....x.....             |
+
+    # Get the dimensionality of the parameter space
+    n_dim = len(start_position)
+    # Calculate distance between start position and parameter bounds
+    x = np.abs(np.transpose(param_bounds) - start_position)
+    # Find out whether we are closer to the minimum or maximum bound
+    y = np.array(np.min(x, axis=0))
+    # Pick random number in [-0.5, 0.5], scale with distance to the closest
+    # bound and add to start position.
+    return start_position + y*(np.random.rand(n_walkers, n_dim) - 0.5)
+
+
 def _emcee_fcn(param_values: npt.NDArray[np.float64],
                param_names: list[str],
                model: Callable[[npt.NDArray[np.float64],
@@ -65,7 +87,6 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
         if not param_bounds[param][0] < params[param] < param_bounds[param][1]:
             return -np.inf
 
-
     # Calculate the model given the current parameters and the resampled input
     ymodel = model(input_time,
                    input_data,
@@ -86,6 +107,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                                dict[str, float]],
                               npt.NDArray[np.float64]],
               params: dict[str, dict[str, float]],
+              error_model: str,
               nsteps: int,
               nwalkers: int,
               nworkers: int,
@@ -125,8 +147,13 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     # Dimensionality of the parameter space
     n_dim = len(param_start)
 
-    # Start the walkers in a gaussian ball around the optimised parameters
-    start_p = np.array(param_start) + 1e-5 * np.random.randn(nwalkers, n_dim)
+    # Initialise walkers
+    # First reformat parameter bounds to a 2d array
+    pb = np.zeros((n_dim, 2))
+    for i in range(n_dim):
+        pb[i, 0] = param_bounds[param_names[i]][0]
+        pb[i, 1] = param_bounds[param_names[i]][1]
+    start_p = _init_walkers(np.array(param_start), pb, nwalkers)
 
     # Run as a multithreaded pool
     with Pool(nworkers) as pool:

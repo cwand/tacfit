@@ -70,6 +70,10 @@ def main(sys_args: list[str]):
     parser.add_argument("--mcpost", action='store_true',
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
+    parser.add_argument("--mc_error", type=str,
+                        choices=['const'],
+                        help="Error model to use to calculate likelihood ("
+                             "required when using --mcpost).")
     parser.add_argument("--mc_steps", type=int, metavar="S",
                         help="Apply the monte carlo step algorithm S times "
                              "(required when using --mcpost.")
@@ -226,32 +230,34 @@ def main(sys_args: list[str]):
 
     # Monte Carlo sampling if required
     if args.mcpost:
-       print("Starting Monte Calor sampling.")
-       print("Monte Carlo parameters:")
-       print(f'  steps:   {args.mc_steps}')
-       print(f'  walkers: {args.mc_walkers}')
-       print(f'  burn:    {args.mc_burn}')
-       print(f'  thin:    {args.mc_thin}')
-       print(f'  threads: {args.mc_threads}')
-       if args.save_figs is None:
-           output = None
-       else:
-           output = args.save_figs[0]
-       tacfit.mc_sample(tac[args.time_label],
-                        tac[args.tissue_label],
-                        tac[args.input_label],
-                        {'tissue': args.tissue_label,
-                         'input': args.input_label},
-                        models[model_str]['func'],  # type: ignore
-                        params,
-                        args.mc_steps,
-                        args.mc_walkers,
-                        args.mc_threads,
-                        args.mc_burn,
-                        args.mc_thin,
-                        output=output,
-                        tcut=tcut)
-       print()
+        print("Starting Monte Calor sampling.")
+        print("Monte Carlo parameters:")
+        print(f'  errors:  {args.mc_errors}')
+        print(f'  steps:   {args.mc_steps}')
+        print(f'  walkers: {args.mc_walkers}')
+        print(f'  burn:    {args.mc_burn}')
+        print(f'  thin:    {args.mc_thin}')
+        print(f'  threads: {args.mc_threads}')
+        if args.save_figs is None:
+            output = None
+        else:
+            output = args.save_figs[0]
+        tacfit.mc_sample(tac[args.time_label],
+                         tac[args.tissue_label],
+                         tac[args.input_label],
+                         {'tissue': args.tissue_label,
+                          'input': args.input_label},
+                         models[model_str]['func'],  # type: ignore
+                         params,
+                         args.mc_errors,
+                         args.mc_steps,
+                         args.mc_walkers,
+                         args.mc_threads,
+                         args.mc_burn,
+                         args.mc_thin,
+                         output=output,
+                         tcut=tcut)
+        print()
 
     # Plot data if required
     if args.plot_nofit:

@@ -1,4 +1,4 @@
-from tacfit.mc_sampling import _log_prob_uconst
+from tacfit.mc_sampling import _log_prob_uconst, _init_walkers
 import numpy as np
 import unittest
 
@@ -24,3 +24,39 @@ class TestLogProb(unittest.TestCase):
         lnp = _log_prob_uconst(data, smpl, sigma)
 
         self.assertAlmostEqual(3.534586, lnp, places=6)
+
+
+class TestInitWalkers(unittest.TestCase):
+
+    def test_1_dim_5_walkers(self):
+        start_position = np.array([5.0])
+        param_bounds = np.array([[3.0, 10.0],])
+        walkers = _init_walkers(start_position, param_bounds, 5)
+
+        self.assertEqual((5, 1), walkers.shape)
+        self.assertTrue(np.all(
+            np.logical_and(walkers > 4.0, walkers < 6.0)))
+
+    def test_2_dim_4_walkers(self):
+        start_position = np.array([0.0, 10.0])
+        param_bounds = np.array([[-10.0, 2.0], [-10.0, 100.0]])
+        walkers = _init_walkers(start_position, param_bounds, 4)
+
+        self.assertEqual((4, 2), walkers.shape)
+        self.assertTrue(np.all(
+            np.logical_and(walkers[:, 0] > -1.0, walkers[:, 0] < 1.0)))
+        self.assertTrue(np.all(
+            np.logical_and(walkers[:, 1] > 0.0, walkers[:, 1] < 20.0)))
+
+    def test_3_dim_50_walkers(self):
+        start_position = np.array([1.0, -2.0, 10.0])
+        param_bounds = np.array([[-1.0, 5.0], [-10.0, 0.0], [0.0, 15.0]])
+        walkers = _init_walkers(start_position, param_bounds, 50)
+
+        self.assertEqual((50, 3), walkers.shape)
+        self.assertTrue(np.all(
+            np.logical_and(walkers[:, 0] > 0.0, walkers[:, 0] < 2.0)))
+        self.assertTrue(np.all(
+            np.logical_and(walkers[:, 1] > -3.0, walkers[:, 1] < -1.0)))
+        self.assertTrue(np.all(
+            np.logical_and(walkers[:, 2] > 7.5, walkers[:, 2] < 12.5)))
