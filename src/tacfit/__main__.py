@@ -90,6 +90,8 @@ def main(sys_args: list[str]):
     parser.add_argument("--mc_threads", type=int, metavar="N",
                         help="Use N threads to run the monte carlo search ("
                              "required when using --mcpost).")
+    parser.add_argument("--mc_hideprogress", action='store_false',
+                        help="Hides the progress bar when using --mcpost.")
     parser.add_argument("--rng_seed", type=int,
                         help="Set the RNG seed. If no seed is provided the "
                              "seed will be set automatically from "
@@ -242,22 +244,23 @@ def main(sys_args: list[str]):
             output = None
         else:
             output = args.save_figs[0]
-        tacfit.mc_sample(tac[args.time_label],
-                         tac[args.tissue_label],
-                         tac[args.input_label],
-                         {'tissue': args.tissue_label,
-                          'input': args.input_label},
-                         models[model_str]['func'],  # type: ignore
-                         params,
-                         args.mc_error,
-                         args.mc_steps,
-                         args.mc_walkers,
-                         args.mc_threads,
-                         args.mc_burn,
-                         args.mc_thin,
+        tacfit.mc_sample(time_data=tac[args.time_label],
+                         tissue_data=tac[args.tissue_label],
+                         input_data=tac[args.input_label],
+                         labels={'tissue': args.tissue_label,
+                                 'input': args.input_label},
+                         model=models[model_str]['func'],  # type: ignore
+                         params=params,
+                         error_model=args.mc_error,
+                         nsteps=args.mc_steps,
+                         nwalkers=args.mc_walkers,
+                         nworkers=args.mc_threads,
+                         burn=args.mc_burn,
+                         thin=args.mc_thin,
                          output=output,
                          tcut=tcut,
-                         delay=tdelay)
+                         delay=tdelay,
+                         progress=args.mc_hideprogress)
         print()
 
     # Plot data if required

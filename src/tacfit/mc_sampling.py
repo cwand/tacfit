@@ -116,6 +116,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               thin: int,
               tcut: Optional[int] = None,
               delay: Optional[float] = None,
+              progress: bool = True,
               output: Optional[str] = None) -> None:
 
     # Sample the posterior parameter distribution space using Monte Carlo
@@ -165,7 +166,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                                               time_data_cut, input_data_cut,
                                               tissue_data_cut, param_bounds),
                                         pool=pool)
-        sampler.run_mcmc(start_p, nsteps, progress=False)
+        sampler.run_mcmc(start_p, nsteps, progress=progress)
 
     # Plot the history of each walker
     fig, axes = plt.subplots(n_dim, figsize=(10, 7), sharex=True)
