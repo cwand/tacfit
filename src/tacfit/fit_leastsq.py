@@ -108,7 +108,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             # Report and plot result of fit
 
             lmfit.report_fit(res)
-            res.ci_report()
+            print("[[Confidence Intervals]]")
+            print(res.ci_report())
             # Calculate best fitting model
             best_fit = model(t_in=input_time,  # type: ignore
                              in_func=input_data,
