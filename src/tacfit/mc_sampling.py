@@ -120,7 +120,7 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
                                 ymodel,
                                 params['sigma'])
     if error_model == "sqrt":
-        return _log_prob_usqrt(time_data,
+        return _log_prob_usqrt(tissue_data,
                                ymodel,
                                params['sigma'])
     else:
