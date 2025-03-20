@@ -35,7 +35,8 @@ dependencies = [
 	'matplotlib',
     'lmfit',
     'emcee',
-	'corner'
+	'corner',
+	'tqdm'
 ]
 
 [project.urls]
