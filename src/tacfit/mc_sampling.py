@@ -28,14 +28,35 @@ def _log_prob_uconst(data: npt.NDArray[np.float64],
     #   2) the uncertainty itself
 
     n = data.size  # number of data points
+    s2 = np.power(sigma, 2.0)
 
     # Contribution 1:
-    cont1 = - np.sum(np.power(data - smpl, 2.0)) / (2.0 * np.power(sigma, 2.0))
+    cont1 = - np.sum(np.power(data - smpl, 2.0)) / (2.0 * s2)
 
     # Contribution 2:
-    cont2 = -n * np.log(2.0 * np.pi * np.power(sigma, 2.0)) / 2.0
+    cont2 = -n * np.log(2.0 * np.pi * s2) / 2.0
 
     return float(cont1 + cont2)
+
+
+def _log_prob_usqrt(data: npt.NDArray[np.float64],
+                    smpl: npt.NDArray[np.float64],
+                    sigma: float) -> float:
+
+    # Calculates the log-probability assuming sigma_i^2 = sigma^2 * y_i
+    # (uncertainty scales with square root of measured data)
+
+    # Check whether any data has value 0.0, which would cause problems
+    if np.any(data == 0.0):
+        raise ZeroDivisionError("Measured data has 0.0-values "
+                                "(zero uncertainty).")
+
+    s2 = np.power(sigma, 2.0)
+
+    t1 = np.log(2.0 * np.pi * s2 * data)
+    t2 = np.power(data - smpl, 2.0) / (s2 * data)
+
+    return float(-0.5 * np.sum(t1 + t2))
 
 
 def _init_walkers(start_position: npt.NDArray[np.float64],
@@ -71,7 +92,8 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
                time_data: npt.NDArray[np.float64],
                input_data: npt.NDArray[np.float64],
                tissue_data: npt.NDArray[np.float64],
-               param_bounds: dict[str, tuple[float, float]]) -> float:
+               param_bounds: dict[str, tuple[float, float]],
+               error_model: str) -> float:
     # Defines the probability distribution used by emcee (below) to sample
     # the parameter distribution of a fit model
 
@@ -93,9 +115,16 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
                    time_data, **params)  # type: ignore
 
     # Calculate and return the log-proability distribution (non-normalised)
-    return _log_prob_uconst(tissue_data,
-                            ymodel,
-                            params['sigma'])
+    if error_model == "const":
+        return _log_prob_uconst(tissue_data,
+                                ymodel,
+                                params['sigma'])
+    if error_model == "sqrt":
+        return _log_prob_usqrt(time_data,
+                               ymodel,
+                               params['sigma'])
+    else:
+        exit("Exiting: Unknown error model")
 
 
 def mc_sample(time_data: npt.NDArray[np.float64],
@@ -164,7 +193,8 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                                         args=(param_names, model,
                                               input_time_cut,
                                               time_data_cut, input_data_cut,
-                                              tissue_data_cut, param_bounds),
+                                              tissue_data_cut, param_bounds,
+                                              error_model),
                                         pool=pool)
         sampler.run_mcmc(start_p, nsteps, progress=progress)
 

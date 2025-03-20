@@ -1,9 +1,9 @@
-from tacfit.mc_sampling import _log_prob_uconst, _init_walkers
+from tacfit.mc_sampling import _log_prob_uconst, _log_prob_usqrt, _init_walkers
 import numpy as np
 import unittest
 
 
-class TestLogProb(unittest.TestCase):
+class TestLogProbUConst(unittest.TestCase):
 
     def test_log_prob_on_data(self):
         data = np.array([1.0, 2.0, 3.0, 2.0])
@@ -24,6 +24,38 @@ class TestLogProb(unittest.TestCase):
         lnp = _log_prob_uconst(data, smpl, sigma)
 
         self.assertAlmostEqual(3.534586, lnp, places=6)
+
+
+class TestLogProbUSqrt(unittest.TestCase):
+
+    def test_log_prob_on_data(self):
+        data = np.array([1.0, 2.0, 4.0, 16.0])
+        smpl = np.array([1.0, 2.0, 4.0, 16.0])
+
+        sigma = 0.1
+
+        lnp = _log_prob_usqrt(data, smpl, sigma)
+
+        self.assertAlmostEqual(3.108571, lnp, places=6)
+
+    def test_log_prob_tissue_off_data(self):
+        data = np.array([1.0, 2.0, 4.0, 16.0])
+        smpl = np.array([1.1, 1.9, 3.0, 20.0])
+
+        sigma = 0.1
+
+        lnp = _log_prob_usqrt(data, smpl, sigma)
+
+        self.assertAlmostEqual(-60.141429, lnp, places=6)
+
+    def test_error_on_0_data(self):
+        data = np.array([0.0, 2.0, 4.0, 16.0])
+        smpl = np.array([0.1, 1.9, 3.0, 20.0])
+
+        sigma = 0.1
+
+        self.assertRaises(ZeroDivisionError,
+                          _log_prob_usqrt, data, smpl, sigma)
 
 
 class TestInitWalkers(unittest.TestCase):

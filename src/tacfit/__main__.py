@@ -71,7 +71,7 @@ def main(sys_args: list[str]):
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
     parser.add_argument("--mc_error", type=str,
-                        choices=['const'],
+                        choices=['const', 'sqrt'],
                         help="Error model to use to calculate likelihood ("
                              "required when using --mcpost).")
     parser.add_argument("--mc_steps", type=int, metavar="S",
