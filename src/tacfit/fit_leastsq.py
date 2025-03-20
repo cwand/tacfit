@@ -1,6 +1,6 @@
 import lmfit
 import matplotlib.pyplot as plt
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 import numpy as np
 import numpy.typing as npt
 import os
@@ -16,7 +16,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
-                tcut: Optional[int | list[int]] = None,
+                tcut: Optional[Union[int, list[int]]] = None,
                 delay: Optional[float] = None,
                 output: Optional[str] = None) -> None:
     """Fit a model to measured TAC data using lmfit.
