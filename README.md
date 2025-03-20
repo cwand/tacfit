@@ -37,7 +37,7 @@ Starting TACFIT 1.0.1
 __main__.py: error: the following arguments are required: ...
 ```
 
-## Using tacfit
+## Non-linear least squares fitting using tacfit
 
 First and foremost: a help message is displayed when running tacfit with the ```-h``` flag:
 ```
@@ -68,28 +68,49 @@ Below the various options and settings of ```tacfit``` are explained in detail.
 
 ### Models
 The models currently implemented in tacfit are
+* delay
 * stepconst
 * step2
 
 The list of implemented models and their descriptions can be seen by using the
 ```--list_models``` option.
 
+#### The delay model
+The intent of this model is to be able to estimate the delay between the measured input function signal and the
+actual input function (i.e. the activity concentration in the blood entering the tissue) from the very early part of the time-activity-curves. The impulse response
+function is simply a constant. However, a variable delay is added to the input function before integration, and
+this variable is also fitted. The fitted tissue model is then\
+$$M(t) = k \int_0^t C_{\mathrm{a}}(\tau-t_\mathrm{d}) d \tau,$$\
+where $C_{\mathrm{a}}(t)$ is the measured input function and $k$ and $t_{\mathrm{d}}$ are the fitting parameters.
+The parameters are specified in ```tacfit``` as (numerical values are just examples):
+```
+--param k 0.1 0.0 1.0 --param delay 1.0 0.0 10.0
+```
+
 #### The stepconst model
 In this model, the impulse response function $R(t)$ is\
-$$R(t) = \mathrm{amp1}, \quad t < \mathrm{extent1}$$\
-$$R(t) = \mathrm{amp2}, \quad t \geq \mathrm{extent1}$$\
+$$R(t) = a_1, \quad t < t_1$$\
+$$R(t) = a_2, \quad t \geq t_1$$\
 This models the situation where the tracer flows through the tissue in some transit time, and
 some fraction is extracted by the tissue and stays in the tissue forever.
+The parameters are specified in ```tacfit``` as (numerical values are just examples):
+```
+--param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0
+```
 
 #### The step2 model
 An extension of the ```stepconst``` model, where the impulse response function drops to 0 after some
 time $\mathrm{extent2}$:\
-$$R(t) = \mathrm{amp1}, \quad t < \mathrm{extent1}$$\
-$$R(t) = \mathrm{amp2}, \quad \mathrm{extent1} \leq t < \mathrm{extent2}$$\
-$$R(t) = 0, \quad t \geq \mathrm{extent2}$$\
+$$R(t) = a_1, \quad t < t_1$$\
+$$R(t) = a_2, \quad t_1 \leq t < t_2$$\
+$$R(t) = 0, \quad t \geq t_2$$\
 This models a situation where the tracer flows through the tissue in some transit time,
 some fraction is extracted by the tissue and stays in the tissue for some time
 and then leaves the tissue.
+The parameters are specified in ```tacfit``` as (numerical values are just examples):
+```
+--param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0 --param extent2 100 0.0 500
+```
 
 ### Setting parameters
 Each paramater of the model must be given an initial value and bounds for the fitting procedure.
@@ -112,3 +133,47 @@ describing the delay in seconds.
 ### Save figures to files
 As default, figures are shown on the screen. If the figures should instead be saved to a file, use the
 ```--save_figs PATH``` option, where ```PATH``` is the directory in which the image files should be saved.
+
+
+## Monte Carlo sampling of the posterior parameter probability distribution
+
+To check whether the uncertainties on the parameter estimates found by ```lmfit``` is adequate, it is possible to
+do a Monte Carlo sampling of the posterior parameter likelihood function.
+Let us first set up the notation. We write the time points of the measurements (the acquisition time of each image in the series)
+as $t_i, 1 \leq i \leq n$. The measured tissue activity concentrations are then $y_i = y(t_i)$, and the measured input function
+is $c(t)$. The parameters (to be sampled) of the model function is $\beta_j, 1\leq j \leq k$.
+Now, given a choice of $\beta_j$, the likelihood that we measure a single tissue activity concentration $y_i$ is given by\
+$$\mathcal{L}(y_i | c(t), \beta, \sigma_i) = \frac{1}{\sqrt{2\pi\sigma_i^2}}\exp\left(-\frac{(y_i - \mathcal{M}_i(c(t), \beta))^2}{2\sigma_i^2}\right)$$,\
+where $\mathcal{M}_i$ is the modeled tissue activity curve evaluated at time point $t_i$, $\sigma_i$ is the estimated uncertainty on $y_i$ and we have assumed
+$y_i$ is drawn from a normal distribution with mean $\mathcal{M}_i$ and variance $\sigma_i^2$.
+The uncertainties $\sigma_i$ will be treated as nuisance parameters of the model, since they are rarely estimated directly.
+The combined likelihood of measuring all $y_i$ is then (assuming independent measurements):\
+$$\mathcal{L}(y | c(t), \beta, \sigma) = \prod_i \mathcal{L}(y_i | c(t), \beta, \sigma_i) = \prod_i \frac{1}{\sqrt{2\pi\sigma_i^2}}\exp\left(-\frac{(y_i - \mathcal{M}_i(c(t), \beta))^2}{2\sigma_i^2}\right)$$.
+
+Using Bayes' theorem, we can now write the likelihood function for the parameters $\beta$ and $\sigma$:\
+$$\mathcal{L}(\beta, \sigma | y, c(t)) = \frac{\mathcal{L}(\beta, \sigma) \mathcal{L}(y | c(t), \beta, \sigma)}{\mathcal{L}(y)} = \frac{1}{Z} \mathcal{L}(\beta, \sigma) \prod_i \frac{1}{\sqrt{2\pi\sigma_i^2}}\exp\left(-\frac{(y_i - \mathcal{M}_i(c(t), \beta))^2}{2\sigma_i^2}\right) $$.\
+The marginal likelihood $\mathcal{L}(y)$ is independent on the model parameters and can be identified as the partition function $Z$, the calculataion of which is handled implicitly by the Monte Carlo sampling algorithm. Here we assume the input function $c(t)$ is a fixed parameter of the model. Methods to include the uncertainty on the measurements of $c(t_i)$ are under development.
+
+To sample this likelihood function in ```tacfit``` we use the package [emcee](https://emcee.readthedocs.io/en/stable/). To run the sampling we need to specify what model to use for $\sigma_i$. At this point, two different models are implemtented:
+* ```const```: All uncertainties are equal, i.e. $\sigma_i = \sigma \forall i$.
+* ```sqrt```: Uncertainties scale with the square root of the measured data, i.e. $\sigma_i^2 = \sigma^2 y_i$.
+
+The sampling is run in ```tacfit``` very similarly to a least squares fit, albeit with a handful more options:
+```
+> python -m tacfit tac.txt tacq input tissue stepconst --mcpost --mc_steps 1000 --mc_walkers 300 --mc_error const --mc_threads 4 --mc_burn 300 --mc_thin 30 --rng_seed 42 --param amp1 0.1 0.0 0.3 --param amp2 0.02 0.0 0.1 --param extent1 10 0 100 --param sigma 100 0.1 10000
+```
+The new options are:
+* ```--mcpost```: Tells ```tacfit``` to run the Monte Carlo sampling algorithm.
+* ```--mc_steps```: How many updating steps the algorithm will make.
+* ```--mc_walkers```: The number of independent walkers. See the [emcee documentation](https://emcee.readthedocs.io/en/stable/) for more info.
+* ```--mc_burn```: How many samples to discard as burn-in.
+* ```--mc_thin```: Only keep one out of every N samples (used to avoid autocorrelation).
+* ```--mc_error```: The error model to use.
+* ```--mc_threads```: The number of threads to start
+* ```--mc_hideprogress```: Hides the progress bar, useful if output is piped to a file.
+* ```--rng_seed```: Sets the RNG-seed, to be able to reproduce results.
+
+A couple of changes are also in effect for the parameter specification:
+* The use of an ```x``` to specify "no bound" is not allowed (since the prior probability for each parameter must be non-zero).
+* A new parameter ```sigma``` must be specified (with interpretation based on the error model).
+
