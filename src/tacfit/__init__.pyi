@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 
 from tacfit import model
 
@@ -21,7 +21,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
-                tcut: Optional[int | list[int]] = ...,
+                tcut: Optional[Union[int, list[int]]] = ...,
                 delay: Optional[float] = ...,
                 output: Optional[str] = ...) -> None: ...
 

@@ -78,7 +78,8 @@ def _init_walkers(start_position: npt.NDArray[np.float64],
     y = np.array(np.min(x, axis=0))
     # Pick random number in [-0.5, 0.5], scale with distance to the closest
     # bound and add to start position.
-    return start_position + y*(np.random.rand(n_walkers, n_dim) - 0.5)
+    return np.array(
+        start_position + y*(np.random.rand(n_walkers, n_dim) - 0.5))
 
 
 def _emcee_fcn(param_values: npt.NDArray[np.float64],
