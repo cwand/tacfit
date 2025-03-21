@@ -199,9 +199,13 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                                         pool=pool)
         sampler.run_mcmc(start_p, nsteps, progress=progress)
 
+    # Get chain (walker specific and flat)
+    samples = sampler.get_chain()
+    flat_samples = sampler.get_chain(discard=burn, thin=thin, flat=True)
+
+
     # Plot the history of each walker
     fig, axes = plt.subplots(n_dim, figsize=(10, 7), sharex=True)
-    samples = sampler.get_chain()
     for i in range(n_dim):
         ax = axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)
@@ -230,19 +234,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         plt.savefig(samples_png_path)
         plt.clf()
 
-    # Try to calculate autocorrelation times
-    # (might fail if "steps" is too small)
-    try:
-        tau = sampler.get_autocorr_time(discard=burn, thin=thin)
-        print("Autocorrelation times:")
-        for i in range(len(param_names)):
-            print(f'   {param_names[i]}: {tau[i]:.1f}')
-    except Exception as err:
-        print("Autocorrelation could not be estimated")
-        print(err)
-
     # Make corner plot
-    flat_samples = sampler.get_chain(discard=burn, thin=thin, flat=True)
     corner.corner(flat_samples, labels=param_names, truths=param_start)
     if output is None:
         plt.show()
@@ -250,6 +242,16 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         corner_png_path = os.path.join(output, "corner.png")
         plt.savefig(corner_png_path)
         plt.clf()
+
+    # Calculate parameter statistics
+
+    # Autocorrelation
+    # (might fail if "steps" is too small)
+    try:
+        tau = sampler.get_autocorr_time(discard=burn, thin=thin)
+    except Exception as err:
+        print("Autocorrelation could not be estimated")
+        print(err)
 
     # Print parameter quantiles and save 50% quantile as well as original
     # values for plotting
