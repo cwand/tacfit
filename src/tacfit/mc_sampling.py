@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import os
 
 
+
 def _resample_gaussian(input_data: npt.NDArray[np.float64],
                        sigma: float) -> npt.NDArray[np.float64]:
     rng = np.random.default_rng()
@@ -250,8 +251,34 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     try:
         tau = sampler.get_autocorr_time(discard=burn, thin=thin)
     except Exception as err:
+        tau = np.nan * np.ones_like(param_start)
         print("Autocorrelation could not be estimated")
         print(err)
+
+    # Mean and uncertainty
+    n = flat_samples.shape[0]
+    means = np.mean(flat_samples, axis=0)
+    var_smpl = np.var(flat_samples, axis=0, ddof=1)
+    sem = np.sqrt(tau * var_smpl / n)
+
+    # Sample percentiles
+    percentiles = np.percentile(flat_samples, [2.5, 16, 50, 84, 97.5], axis=0)
+
+    # Report parameter values
+    print(f'Parameter statistics ({n} samples):')
+    for i in range(len(param_names)):
+        print(f'{param_names[i]}: {means[i]}')
+
+
+    print("means")
+    print(means)
+
+    print("sem")
+    print(sem)
+
+    print("percentiles")
+    print(percentiles)
+
 
     # Print parameter quantiles and save 50% quantile as well as original
     # values for plotting
