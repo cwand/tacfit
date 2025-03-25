@@ -264,18 +264,17 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     # Mean and uncertainty
     n = flat_samples.shape[0]
     means = np.mean(flat_samples, axis=0)
-    var_smpl = np.var(flat_samples, axis=0, ddof=1)
-    sem = np.sqrt(tau * var_smpl / n)
+    std = np.std(flat_samples, axis=0, ddof=1)
 
     # Sample percentiles
     pct = np.percentile(flat_samples, [2.5, 16, 50, 84, 97.5], axis=0)
 
     # Report parameter values
     print(f'Parameter statistics ({n} samples):')
-    print("Parameter\tMean\tStandard Error\t"
+    print("Parameter\tMean\tStd.\t"
           "P2.5\tP16\tP50\tP84\tP97.5\tInt. autocorrelation time")
     for i in range(len(param_names)):
-        print(f'{param_names[i]}\t{means[i]}\t{sem[i]}\t'
+        print(f'{param_names[i]}\t{means[i]}\t{std[i]}\t'
               f'{pct[0][i]}\t{pct[1][i]}\t{pct[2][i]}\t'
               f'{pct[3][i]}\t{pct[4][i]}\t{tau[i]}')
 
