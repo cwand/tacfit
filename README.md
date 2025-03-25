@@ -175,5 +175,8 @@ The new options are:
 
 A couple of changes are also in effect for the parameter specification:
 * The use of an ```x``` to specify "no bound" is not allowed (since the prior probability for each parameter must be non-zero).
-* A new parameter ```sigma``` must be specified (with interpretation based on the error model).
+* A new parameter ```_sigma``` must be specified (with interpretation based on the error model). The underscore
+  indicates that this is a nuisance parameter (as opposed to some other sigma, which may be a model parameter).
+* To model input function delay as a nuisance parameter, add the parameter ```_delay``` to the list with appropriate
+  initial value guess and bounds.
 

@@ -111,8 +111,14 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
         if not param_bounds[param][0] < params[param] < param_bounds[param][1]:
             return -np.inf
 
+    # If delay is modeled as a nuisance parameter, shift the input time
+    td = 0.0
+    if '_delay' in params:
+        td = params['_delay']
+    input_time_delayed = input_time + td
+
     # Calculate the model given the current parameters and the resampled input
-    ymodel = model(input_time,
+    ymodel = model(input_time_delayed,
                    input_data,
                    time_data, **params)  # type: ignore
 
@@ -120,11 +126,11 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
     if error_model == "const":
         return _log_prob_uconst(tissue_data,
                                 ymodel,
-                                params['sigma'])
+                                params['_sigma'])
     if error_model == "sqrt":
         return _log_prob_usqrt(tissue_data,
                                ymodel,
-                               params['sigma'])
+                               params['_sigma'])
     else:
         exit("Exiting: Unknown error model")
 
