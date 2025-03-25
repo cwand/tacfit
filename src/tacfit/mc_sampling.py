@@ -262,33 +262,25 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     sem = np.sqrt(tau * var_smpl / n)
 
     # Sample percentiles
-    percentiles = np.percentile(flat_samples, [2.5, 16, 50, 84, 97.5], axis=0)
+    pct = np.percentile(flat_samples, [2.5, 16, 50, 84, 97.5], axis=0)
 
     # Report parameter values
     print(f'Parameter statistics ({n} samples):')
+    print("Parameter\tMean\tStandard Error\t"
+          "P2.5\tP16\tP50\tP84\tP97.5\tInt. autocorrelation time")
     for i in range(len(param_names)):
-        print(f'{param_names[i]}: {means[i]}')
+        print(f'{param_names[i]}\t{means[i]}\t{sem[i]}\t'
+              f'{pct[0][i]}\t{pct[1][i]}\t{pct[2][i]}\t'
+              f'{pct[3][i]}\t{pct[4][i]}\t{tau[i]}')
 
 
-    print("means")
-    print(means)
+    # Plotting
 
-    print("sem")
-    print(sem)
-
-    print("percentiles")
-    print(percentiles)
-
-
-    # Print parameter quantiles and save 50% quantile as well as original
-    # values for plotting
-    print("Parameter quantiles (2.5%, 16%, 50%, 84%, 97.5%)")
+    # Find ML50 fit and fit using the starting position
     ml50 = {}
     original_values = {}
     for i in range(n_dim):
-        mcmc = np.percentile(flat_samples[:, i], [2.5, 16, 50, 84, 97.5])
-        print(param_names[i], ":", mcmc)
-        ml50[param_names[i]] = mcmc[2]
+        ml50[param_names[i]] = pct[2][i]
         original_values[param_names[i]] = param_start[i]
 
     fig, ax = plt.subplots()
