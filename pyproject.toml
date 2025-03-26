@@ -12,7 +12,7 @@ requires-python = ">= 3.9"
 authors = [
 	{name = "Chris Walther Andersen", email = "cwa@rsyd.dk"},
 ]
-description = "Code for extracting a TAC from dynamic SPECT or PET images."
+description = "Code for fitting time activity curves from dynamic SPECT or PET images to pharmacokinetic models."
 readme = "README.md"
 license = {text = "MIT License"}
 classifiers = [
@@ -20,7 +20,7 @@ classifiers = [
 	#   3 - Alpha
 	#   4 - Beta
 	#   5 - Production/Stable
-	"Development Status :: 4 - Beta",
+	"Development Status :: 5 - Stable",
 	# Pick your license as you wish (see also "license" above)
 	"License :: OSI Approved :: MIT License",
 	# Specify the Python versions you support here.
