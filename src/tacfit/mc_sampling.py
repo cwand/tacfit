@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import os
 
 
+
 def _resample_gaussian(input_data: npt.NDArray[np.float64],
                        sigma: float) -> npt.NDArray[np.float64]:
     rng = np.random.default_rng()
@@ -110,8 +111,14 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
         if not param_bounds[param][0] < params[param] < param_bounds[param][1]:
             return -np.inf
 
+    # If delay is modeled as a nuisance parameter, shift the input time
+    td = 0.0
+    if '_delay' in params:
+        td = params['_delay']
+    input_time_delayed = input_time + td
+
     # Calculate the model given the current parameters and the resampled input
-    ymodel = model(input_time,
+    ymodel = model(input_time_delayed,
                    input_data,
                    time_data, **params)  # type: ignore
 
@@ -119,11 +126,11 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
     if error_model == "const":
         return _log_prob_uconst(tissue_data,
                                 ymodel,
-                                params['sigma'])
+                                params['_sigma'])
     if error_model == "sqrt":
         return _log_prob_usqrt(tissue_data,
                                ymodel,
-                               params['sigma'])
+                               params['_sigma'])
     else:
         exit("Exiting: Unknown error model")
 
@@ -199,9 +206,13 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                                         pool=pool)
         sampler.run_mcmc(start_p, nsteps, progress=progress)
 
+    # Get chain (walker specific and flat)
+    samples = sampler.get_chain()
+    flat_samples = sampler.get_chain(discard=burn, thin=thin, flat=True)
+
+
     # Plot the history of each walker
     fig, axes = plt.subplots(n_dim, figsize=(10, 7), sharex=True)
-    samples = sampler.get_chain()
     for i in range(n_dim):
         ax = axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)
@@ -230,19 +241,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         plt.savefig(samples_png_path)
         plt.clf()
 
-    # Try to calculate autocorrelation times
-    # (might fail if "steps" is too small)
-    try:
-        tau = sampler.get_autocorr_time(discard=burn, thin=thin)
-        print("Autocorrelation times:")
-        for i in range(len(param_names)):
-            print(f'   {param_names[i]}: {tau[i]:.1f}')
-    except Exception as err:
-        print("Autocorrelation could not be estimated")
-        print(err)
-
     # Make corner plot
-    flat_samples = sampler.get_chain(discard=burn, thin=thin, flat=True)
     corner.corner(flat_samples, labels=param_names, truths=param_start)
     if output is None:
         plt.show()
@@ -251,15 +250,42 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         plt.savefig(corner_png_path)
         plt.clf()
 
-    # Print parameter quantiles and save 50% quantile as well as original
-    # values for plotting
-    print("Parameter quantiles (2.5%, 16%, 50%, 84%, 97.5%)")
+    # Calculate parameter statistics
+
+    # Autocorrelation
+    # (might fail if "steps" is too small)
+    try:
+        tau = sampler.get_autocorr_time(discard=burn, thin=thin)
+    except Exception as err:
+        tau = np.nan * np.ones_like(param_start)
+        print("Autocorrelation could not be estimated")
+        print(err)
+
+    # Mean and uncertainty
+    n = flat_samples.shape[0]
+    means = np.mean(flat_samples, axis=0)
+    std = np.std(flat_samples, axis=0, ddof=1)
+
+    # Sample percentiles
+    pct = np.percentile(flat_samples, [2.5, 16, 50, 84, 97.5], axis=0)
+
+    # Report parameter values
+    print(f'Parameter statistics ({n} samples):')
+    print("Parameter\tMean\tStd.\t"
+          "P2.5\tP16\tP50\tP84\tP97.5\tInt. autocorrelation time")
+    for i in range(len(param_names)):
+        print(f'{param_names[i]}\t{means[i]}\t{std[i]}\t'
+              f'{pct[0][i]}\t{pct[1][i]}\t{pct[2][i]}\t'
+              f'{pct[3][i]}\t{pct[4][i]}\t{tau[i]}')
+
+
+    # Plotting
+
+    # Find ML50 fit and fit using the starting position
     ml50 = {}
     original_values = {}
     for i in range(n_dim):
-        mcmc = np.percentile(flat_samples[:, i], [2.5, 16, 50, 84, 97.5])
-        print(param_names[i], ":", mcmc)
-        ml50[param_names[i]] = mcmc[2]
+        ml50[param_names[i]] = pct[2][i]
         original_values[param_names[i]] = param_start[i]
 
     fig, ax = plt.subplots()
