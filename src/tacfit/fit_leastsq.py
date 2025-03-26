@@ -5,6 +5,8 @@ import numpy as np
 import numpy.typing as npt
 import os
 
+from lmfit import ci_report
+
 
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
@@ -109,7 +111,12 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
             lmfit.report_fit(res)
             print("[[Confidence Intervals]]")
-            print(res.ci_report())
+            try:
+                ci_report = res.ci_report()
+                print(ci_report)
+            except:
+                print("Could not calculate confidence intervals.")
+
             # Calculate best fitting model
             best_fit = model(t_in=input_time,  # type: ignore
                              in_func=input_data,

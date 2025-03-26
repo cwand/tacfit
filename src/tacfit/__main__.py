@@ -170,6 +170,11 @@ def main(sys_args: list[str]):
             'func': tacfit.model.model_stepconst,
             'desc': "Step function followed by constant "
                     "(amp1, extent1, amp2)."},
+        "normconst": {
+            'func': tacfit.model.model_normconst,
+            'desc': "Smooth transition to constant "
+                    "(amp1, extent1, width1, amp2)."
+        }
     }
 
     # List models option

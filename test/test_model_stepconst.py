@@ -91,9 +91,9 @@ class TestSplitArrays(unittest.TestCase):
         self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
 
 
-class TestModelStep2(unittest.TestCase):
+class TestModelStepconst(unittest.TestCase):
 
-    def test_model_step2_case1(self):
+    def test_model_stepconst_case1(self):
         amp = 0.3
         amp2 = 0.1
         extent = 6.0
