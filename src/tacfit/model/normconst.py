@@ -50,38 +50,31 @@ def model_normconst(
         # Get current time point
         ti = t_out[i]
 
-        # We have to integrate the input function from t=0 to t=ti:
+        # Get time points of input function between t=0 and t=ti
         t_in_cut = [0.0]
         t_in_cut = np.append(t_in_cut, t_in[t_in < ti])
         t_in_cut = np.append(t_in_cut, ti)
 
+        # Get input function samples between t=0 and t=ti
         f_in_cut = [0.0]
         f_in_cut = np.append(f_in_cut, in_func[t_in < ti])
         f_in_cut = np.append(f_in_cut, np.interp(ti, t_in, in_func))
 
+        # IRF needs to be evaluated at ti - tau, where tau is the time
+        # points of the input function samples.
+        # This interpolates the IRF between these points, which creates an
+        # error...
+
+        # Normcdf argument:
         irf_t = ((ti - t_in_cut) - ext1)/(math.sqrt(2.0) * wid1)
+
+        # Calculate normcdf using error function (seems to be much quicker)
         cdf = 0.5 * (1.0 + scipy.special.erf(irf_t))
+
+        # Calculate input response function
         irf = (amp2 + (amp1 - amp2) * (1.0 - cdf))
 
+        # Compute convolution
         res[i] = scipy.integrate.trapezoid(irf*f_in_cut, t_in_cut)
-        '''
-        # Define integrand at this timepoint
-        def integrand(tau: float) -> float:
-            # cdf = scipy.stats.norm.cdf(ti - tau, loc=ext1, scale=wid1)
-            z = ((ti - tau) - ext1)/(math.sqrt(2.0) * wid1)
-            cdf = 0.5 * (1.0 + scipy.special.erf(z))
-            infunc_val = np.interp(tau, t_in, in_func, left=0.0)
-            return (amp2 + (amp1 - amp2) * (1.0 - cdf)) * infunc_val
-
-        # To avoid discontinuity problems we do the integral as a sum of
-        # integrals between the time points on the sampled IRF.
-        for k in range(0, t_in_cut.size - 1):
-            y = scipy.integrate.quad(integrand, t_in_cut[k], t_in_cut[k+1],
-                                     epsrel=0.001,
-                                     epsabs=0.001)
-            res[i] += y[0]
-        #y = scipy.integrate.quad(integrand, 0.0, ti)
-        #res[i] = y[0]'''
-
 
     return res
