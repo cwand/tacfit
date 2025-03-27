@@ -173,7 +173,11 @@ def main(sys_args: list[str]):
         "normconst": {
             'func': tacfit.model.model_normconst,
             'desc': "Smooth transition to constant "
-                    "(amp1, extent1, width1, amp2)."
+                    "(amp1, extent1, width1, amp2)."},
+        "stepnorm": {
+            'func': tacfit.model.model_stepnorm,
+            'desc': "Step function followed by smooth transition to 0"
+                    "(amp1, extent1, amp2, extent2, width2)."
         }
     }
 
