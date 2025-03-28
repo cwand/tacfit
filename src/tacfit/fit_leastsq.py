@@ -16,6 +16,9 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
+                irf: Callable[[npt.NDArray[np.float64],
+                               dict[str, float]],
+                              npt.NDArray[np.float64]],
                 tcut: Optional[Union[int, list[int]]] = None,
                 delay: Optional[float] = None,
                 output: Optional[str] = None) -> None:
@@ -108,8 +111,30 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             # Report and plot result of fit
 
             lmfit.report_fit(res)
+
             print("[[Confidence Intervals]]")
-            print(res.ci_report())
+            ci_report = res.ci_report()
+            print(ci_report)
+
+            # Show best fitting IRF:
+            fig, ax = plt.subplots()
+            tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[t_cut],
+                                                    0.01)
+            best_irf = irf(tt, **res.best_values)  # type: ignore
+            ax.plot(tt, best_irf, 'k-', label="Fitted IRF")
+
+            ax.set_xlabel('Time [sec]')
+            ax.set_ylabel('IRF')
+
+            plt.legend()
+            plt.grid(visible=True)
+            if output is None:
+                plt.show()
+            else:
+                fit_png_path = os.path.join(output, "irf.png")
+                plt.savefig(fit_png_path)
+                plt.clf()
+
             # Calculate best fitting model
             best_fit = model(t_in=input_time,  # type: ignore
                              in_func=input_data,
