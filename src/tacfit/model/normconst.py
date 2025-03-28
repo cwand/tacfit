@@ -19,7 +19,8 @@ def irf_normconst(
     cdf = 0.5 * (1.0 + scipy.special.erf(tt))
 
     # Calculate input response function
-    return amp2 + (amp1 - amp2) * (1.0 - cdf)
+    return np.array(amp2 + (amp1 - amp2) * (1.0 - cdf))
+
 
 def model_normconst(
         t_in: npt.NDArray[np.float64],
@@ -60,7 +61,6 @@ def model_normconst(
     wid1 = kwargs['width1']
     amp2 = kwargs['amp2']
 
-
     for i in range(0, res.size):
         # For each time point the integrand is integrated.
 
@@ -68,12 +68,12 @@ def model_normconst(
         ti = t_out[i]
 
         # Get time points of input function between t=0 and t=ti
-        t_in_cut = [0.0]
+        t_in_cut = np.array([0.0])
         t_in_cut = np.append(t_in_cut, t_in[t_in < ti])
         t_in_cut = np.append(t_in_cut, ti)
 
         # Get input function samples between t=0 and t=ti
-        f_in_cut = [0.0]
+        f_in_cut = np.array([0.0])
         f_in_cut = np.append(f_in_cut, in_func[t_in < ti])
         f_in_cut = np.append(f_in_cut, np.interp(ti, t_in, in_func))
 

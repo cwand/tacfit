@@ -9,6 +9,7 @@ def irf_delay(
     k = kwargs['k']
     return k * np.ones_like(t)
 
+
 def model_delay(t_in: npt.NDArray[np.float64],
                 in_func: npt.NDArray[np.float64],
                 t_out: npt.NDArray[np.float64],

@@ -20,6 +20,7 @@ class TestIRFStep2(unittest.TestCase):
 
         self.assertTrue(np.all(np.abs(m - m_exp) < 0.00000001))
 
+
 class TestSplitArrays(unittest.TestCase):
 
     def test_split_no_problems(self):

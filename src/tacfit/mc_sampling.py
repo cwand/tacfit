@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import os
 
 
-
 def _resample_gaussian(input_data: npt.NDArray[np.float64],
                        sigma: float) -> npt.NDArray[np.float64]:
     rng = np.random.default_rng()
@@ -210,7 +209,6 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     samples = sampler.get_chain()
     flat_samples = sampler.get_chain(discard=burn, thin=thin, flat=True)
 
-
     # Plot the history of each walker
     fig, axes = plt.subplots(n_dim, figsize=(10, 7), sharex=True)
     for i in range(n_dim):
@@ -277,7 +275,6 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         print(f'{param_names[i]}\t{means[i]}\t{std[i]}\t'
               f'{pct[0][i]}\t{pct[1][i]}\t{pct[2][i]}\t'
               f'{pct[3][i]}\t{pct[4][i]}\t{tau[i]}')
-
 
     # Plotting
 

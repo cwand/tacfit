@@ -18,6 +18,7 @@ def irf_stepconst(
             res[i] = amp1
     return res
 
+
 def _split_arrays(t_in: npt.NDArray[np.float64],
                   in_func: npt.NDArray[np.float64],
                   t: float,

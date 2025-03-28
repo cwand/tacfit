@@ -111,17 +111,16 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             # Report and plot result of fit
 
             lmfit.report_fit(res)
+
             print("[[Confidence Intervals]]")
-            try:
-                ci_report = res.ci_report()
-                print(ci_report)
-            except:
-                print("Could not calculate confidence intervals.")
+            ci_report = res.ci_report()
+            print(ci_report)
 
             # Show best fitting IRF:
             fig, ax = plt.subplots()
-            tt = np.arange(start=0.0, stop=time_data[t_cut], step=0.01)
-            best_irf = irf(tt, **res.best_values)
+            tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[t_cut],
+                                                    0.01)
+            best_irf = irf(tt, **res.best_values)  # type: ignore
             ax.plot(tt, best_irf, 'k-', label="Fitted IRF")
 
             ax.set_xlabel('Time [sec]')

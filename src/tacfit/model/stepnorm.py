@@ -24,7 +24,8 @@ def irf_stepnorm(
     for i in range(len(t)):
         if t[i] < ext1:
             res[i] += (amp1 - amp2)
-    return res
+    return np.array(res)
+
 
 def _split_arrays(t_in: npt.NDArray[np.float64],
                   in_func: npt.NDArray[np.float64],
@@ -61,6 +62,7 @@ def _split_arrays(t_in: npt.NDArray[np.float64],
     arr4 = np.append(arr4, np.interp(t, t_in, in_func, left=0.0))
 
     return arr1, arr2, arr3, arr4
+
 
 def model_stepnorm(
         t_in: npt.NDArray[np.float64],
@@ -102,7 +104,6 @@ def model_stepnorm(
     amp2 = kwargs['amp2']
     ext2 = kwargs['extent2']
 
-
     for i in range(0, res.size):
 
         # Get current time point
@@ -134,6 +135,5 @@ def model_stepnorm(
         y1 = scipy.integrate.trapezoid(irf*f1, t1)
 
         res[i] = amp1 * y2 + y1
-
 
     return res
