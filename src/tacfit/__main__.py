@@ -156,26 +156,32 @@ def main(sys_args: list[str]):
     models = {
         "nomodel": {
             'func': lambda x: 1,
+            'irf': lambda x: 1,
             'desc': "Mock model, used when no modelling is required"
         },
         "delay": {
             'func': tacfit.model.model_delay,
+            'irf': tacfit.model.irf_delay,
             'desc': "Constant with input function delay "
                     "(delay, k)."},
         "step2": {
             'func':  tacfit.model.model_step2,
+            'irf': tacfit.model.irf_step2,
             'desc':  "Two step functions "
                      "(amp1, extent1, amp2, extent2)."},
         "stepconst": {
             'func': tacfit.model.model_stepconst,
+            'irf': tacfit.model.irf_stepconst,
             'desc': "Step function followed by constant "
                     "(amp1, extent1, amp2)."},
         "normconst": {
             'func': tacfit.model.model_normconst,
+            'irf': tacfit.model.irf_normconst,
             'desc': "Smooth transition to constant "
                     "(amp1, extent1, width1, amp2)."},
         "stepnorm": {
             'func': tacfit.model.model_stepnorm,
+            'irf': tacfit.model.irf_stepnorm,
             'desc': "Step function followed by smooth transition to 0"
                     "(amp1, extent1, amp2, extent2, width2)."
         }
@@ -234,6 +240,7 @@ def main(sys_args: list[str]):
                            params,
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
+                           irf=models[model_str]['irf'],  # type: ignore
                            output=output,
                            tcut=tcut,
                            delay=tdelay)

@@ -23,6 +23,10 @@ class TestIRFStepNorm(unittest.TestCase):
                           0.061791142218895,
                           0.015865525393146])
 
+        self.assertTrue(np.all(np.abs(m - m_exp) < 0.0000001))
+
+
+
 
 class TestSplitArrays(unittest.TestCase):
 

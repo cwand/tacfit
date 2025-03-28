@@ -23,7 +23,8 @@ def irf_stepnorm(
     res = amp2 * (1.0 - cdf)
     for i in range(len(t)):
         if t[i] < ext1:
-            res[i] += amp1
+            res[i] += (amp1 - amp2)
+    return res
 
 def _split_arrays(t_in: npt.NDArray[np.float64],
                   in_func: npt.NDArray[np.float64],
