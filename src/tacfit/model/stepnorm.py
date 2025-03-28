@@ -1,22 +1,30 @@
-import numpy.typing as npt
+import math
+
 import numpy as np
+import numpy.typing as npt
 import scipy
 
 
-def irf_stepconst(
+def irf_stepnorm(
         t: npt.NDArray[np.float64],
         **kwargs: float) -> npt.NDArray[np.float64]:
 
     amp1 = kwargs['amp1']
     amp2 = kwargs['amp2']
     ext1 = kwargs['extent1']
+    ext2 = kwargs['extent2']
+    wid2 = kwargs['width2']
 
     # Calculate normcdf using error function (seems to be much quicker)
-    res = amp2 * np.ones_like(t)
+    tt = (t - ext2) / (math.sqrt(2.0) * wid2)
+    cdf = 0.5 * (1.0 + scipy.special.erf(tt))
+
+    # Calculate input response function
+    res = amp2 * (1.0 - cdf)
     for i in range(len(t)):
         if t[i] < ext1:
-            res[i] = amp1
-    return res
+            res[i] += (amp1 - amp2)
+    return np.array(res)
 
 
 def _split_arrays(t_in: npt.NDArray[np.float64],
@@ -56,28 +64,32 @@ def _split_arrays(t_in: npt.NDArray[np.float64],
     return arr1, arr2, arr3, arr4
 
 
-def model_stepconst(t_in: npt.NDArray[np.float64],
-                    in_func: npt.NDArray[np.float64],
-                    t_out: npt.NDArray[np.float64],
-                    **kwargs: float) -> npt.NDArray[np.float64]:
-    """Solves the model where the impulse response function is assumed to be a
-    step function followed by a constant.
+def model_stepnorm(
+        t_in: npt.NDArray[np.float64],
+        in_func: npt.NDArray[np.float64],
+        t_out: npt.NDArray[np.float64],
+        **kwargs: float) -> npt.NDArray[np.float64]:
+    """Solves the model where the impulse response function starts at the value
+    amp1, drops to a new value amp2 at time extent1 and then transitions
+    smoothly to 0 at around time extent2.
+    The smoothness is implemented as a cumulative normal distribution function
+    with mean extent2 and standard deviation width2.
+    NOTE: The cumulative normal distribution is not equal to 1 at t=0, so if
+    the mean is small and/or the width is large, this will mean the IRF will
+    start at a smaller value than amp1.
     This function calculates the convolution of a sampled input function with
-    a step-const-function. The step function has value amp1 on the interval
-    [0, extent1), followed by the value amp2 on the interval
-    [extent1, infinity).
+    the impulse response function.
     The convolution is evaluated at the time points given in t_out and
     returned as a list.
-    The convolution is performed numerically using scipy.integrate.trapezoid
-    and the input function is interpolated linearly between sample points.
 
     Arguments:
     t_in    --  The time points of the input function samples.
     in_func --  The input function samples.
     t_out   --  The time points where the model should be evaluated.
-    amp1    --  The amplitude of the step function on [0, extent1).
-    extent1 --  The length of the first step function.
-    amp2    --  The value of the response function on [extent1, infinity).
+    amp1    --  The value of the IRF at t=0
+    extent1 --  The midpoint of the transition from amp1 to amp2
+    width1  --  The width of the transition between amp1 and amp2
+    amp2    --  The value of the IRF at t=inf.
 
     Return value:
     A list containing the modeled values at each time point.
@@ -88,20 +100,40 @@ def model_stepconst(t_in: npt.NDArray[np.float64],
     # Unpack parameters
     ext1 = kwargs['extent1']
     amp1 = kwargs['amp1']
+    wid2 = kwargs['width2']
     amp2 = kwargs['amp2']
+    ext2 = kwargs['extent2']
 
     for i in range(0, res.size):
-        # For each time point the integrand is integrated.
 
         # Get current time point
         ti = t_out[i]
 
-        # We split the integral up at the discontinuity point at t=ti - extent1
+        # We split the integral up into two parts, before and after extent1:
         t1, f1, t2, f2 = _split_arrays(t_in, in_func, ti, ext1)
-        y1 = scipy.integrate.trapezoid(f1, t1)
+
+        # Evaluate integral of input function from t=ti-ext1 to t=ti
         y2 = scipy.integrate.trapezoid(f2, t2)
 
-        # Multiply by the amplitudes
-        res[i] = amp2 * y1 + amp1 * y2
+        # Evalute integral from t=0 to t=ti-ext1
+
+        # IRF needs to be evaluated at ti - tau, where tau is the time
+        # points of the input function samples (t1).
+        # This interpolates the IRF between these points, which creates an
+        # error...
+
+        # Normcdf argument:
+        irf_t = ((ti - t1) - ext2)/(math.sqrt(2.0) * wid2)
+
+        # Calculate normcdf using error function (seems to be much quicker)
+        cdf = 0.5 * (1.0 + scipy.special.erf(irf_t))
+
+        # Calculate input response function
+        irf = amp2 * (1.0 - cdf)
+
+        # Compute convolution
+        y1 = scipy.integrate.trapezoid(irf*f1, t1)
+
+        res[i] = amp1 * y2 + y1
 
     return res

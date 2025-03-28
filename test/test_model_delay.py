@@ -3,6 +3,20 @@ import numpy as np
 import unittest
 
 
+class TestIRFDelay(unittest.TestCase):
+
+    def test_case1(self):
+
+        k = 0.1
+        delay = 3.0
+
+        t = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+
+        m = mdelay.irf_delay(t, k=k, delay=delay)
+        m_exp = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
+        self.assertTrue(np.all(np.abs(m - m_exp) < 0.000001))
+
+
 class TestModelDelay(unittest.TestCase):
 
     def test_model_delay_case1(self):
