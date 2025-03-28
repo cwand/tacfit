@@ -3,6 +3,24 @@ import numpy.typing as npt
 import scipy
 
 
+def irf_step2(
+        t: npt.NDArray[np.float64],
+        **kwargs: float) -> npt.NDArray[np.float64]:
+
+    amp1 = kwargs['amp1']
+    amp2 = kwargs['amp2']
+    ext1 = kwargs['extent1']
+    ext2 = kwargs['extent2']
+
+    # Calculate normcdf using error function (seems to be much quicker)
+    res = np.zeros_like(t)
+    for i in range(len(t)):
+        if t[i] < ext1:
+            res[i] = amp1
+        elif t[i] < ext2:
+            res[i] = amp2
+    return res
+
 def _split_arrays(t_in: npt.NDArray[np.float64],
                   in_func: npt.NDArray[np.float64],
                   t: float,

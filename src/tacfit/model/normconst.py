@@ -4,6 +4,23 @@ import numpy as np
 import numpy.typing as npt
 import scipy
 
+
+def irf_normconst(
+        t: npt.NDArray[np.float64],
+        **kwargs: float) -> npt.NDArray[np.float64]:
+
+    amp1 = kwargs['amp1']
+    amp2 = kwargs['amp2']
+    ext1 = kwargs['extent1']
+    wid1 = kwargs['width1']
+
+    # Calculate normcdf using error function (seems to be much quicker)
+    tt = (t - ext1) / (math.sqrt(2.0) * wid1)
+    cdf = 0.5 * (1.0 + scipy.special.erf(tt))
+
+    # Calculate input response function
+    return amp2 + (amp1 - amp2) * (1.0 - cdf)
+
 def model_normconst(
         t_in: npt.NDArray[np.float64],
         in_func: npt.NDArray[np.float64],

@@ -5,8 +5,6 @@ import numpy as np
 import numpy.typing as npt
 import os
 
-from lmfit import ci_report
-
 
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],

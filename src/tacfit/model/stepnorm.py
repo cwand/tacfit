@@ -4,6 +4,27 @@ import numpy as np
 import numpy.typing as npt
 import scipy
 
+
+def irf_stepnorm(
+        t: npt.NDArray[np.float64],
+        **kwargs: float) -> npt.NDArray[np.float64]:
+
+    amp1 = kwargs['amp1']
+    amp2 = kwargs['amp2']
+    ext1 = kwargs['extent1']
+    ext2 = kwargs['extent2']
+    wid2 = kwargs['width2']
+
+    # Calculate normcdf using error function (seems to be much quicker)
+    tt = (t - ext2) / (math.sqrt(2.0) * wid2)
+    cdf = 0.5 * (1.0 + scipy.special.erf(tt))
+
+    # Calculate input response function
+    res = amp2 * (1.0 - cdf)
+    for i in range(len(t)):
+        if t[i] < ext1:
+            res[i] += amp1
+
 def _split_arrays(t_in: npt.NDArray[np.float64],
                   in_func: npt.NDArray[np.float64],
                   t: float,

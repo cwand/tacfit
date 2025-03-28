@@ -3,6 +3,22 @@ import numpy as np
 import unittest
 
 
+class TestIRFStep2(unittest.TestCase):
+
+    def test_case_1(self):
+
+        amp1 = 0.5
+        amp2 = 0.1
+        extent1 = 3.0
+
+        t = np.array([0.0, 2.0, 2.9, 3.1, 5.5])
+
+        m = stepconst.irf_stepconst(t, amp1=amp1, amp2=amp2, extent1=extent1)
+        m_exp = np.array([0.5, 0.5, 0.5, 0.1, 0.1])
+
+        self.assertTrue(np.all(np.abs(m - m_exp) < 0.00000001))
+
+
 class TestSplitArrays(unittest.TestCase):
 
     def test_split_no_problems(self):

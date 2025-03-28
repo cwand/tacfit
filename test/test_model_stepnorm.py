@@ -2,6 +2,28 @@ import tacfit.model.stepnorm as stepnorm
 import numpy as np
 import unittest
 
+
+class TestIRFStepNorm(unittest.TestCase):
+
+    def test_case_1(self):
+
+        amp1 = 0.5
+        amp2 = 0.1
+        extent1 = 3.0
+        extent2 = 10.0
+        wid2 = 1.0
+
+        t = np.array([0.0, 2.9, 3.1, 9.7, 11.0])
+
+        m = stepnorm.irf_stepnorm(t, amp1=amp1, amp2=amp2, extent1=extent1,
+                                  extent2=extent2, width2=wid2)
+        m_exp = np.array([0.500000000000000,
+                          0.499999999999938,
+                          0.099999999999740,
+                          0.061791142218895,
+                          0.015865525393146])
+
+
 class TestSplitArrays(unittest.TestCase):
 
     def test_split_no_problems(self):
@@ -109,8 +131,6 @@ class TestModelNormconst(unittest.TestCase):
                                     amp2=amp2, extent2=extent2,
                                     t_in=tin, in_func=in_fnc,
                                     t_out=t_out)
-
-        print(m)
 
         m_exp = np.array([0.0, 0.6, 25.85, 49.54, 36.71, 35.26,
                           36.18, 35.25, 29.19, 22.72, 18.18])
