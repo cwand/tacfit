@@ -70,7 +70,8 @@ def model_norm2(
 
         # The integrand is infunc(tau) * IRF(ti-tau)
         def integrand(tau: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-            return np.interp(tau, t_in, in_func, left=0.0) * irf_norm2(ti - tau, **kwargs)
+            return (np.interp(tau, t_in, in_func, left=0.0) *
+                    irf_norm2(ti - tau, **kwargs))
 
         # We integrate each step of the input function separately
         j = 0
@@ -82,6 +83,5 @@ def model_norm2(
         # add last step from t[j] to ti
         y = scipy.integrate.quad(integrand, t_in[j], ti)
         res[i] += y[0]
-
 
     return res
