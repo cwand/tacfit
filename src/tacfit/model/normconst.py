@@ -55,43 +55,26 @@ def model_normconst(
 
     res = np.zeros_like(t_out)
 
-    # Unpack parameters
-    ext1 = kwargs['extent1']
-    amp1 = kwargs['amp1']
-    wid1 = kwargs['width1']
-    amp2 = kwargs['amp2']
-
     for i in range(0, res.size):
         # For each time point the integrand is integrated.
 
         # Get current time point
         ti = t_out[i]
 
-        # Get time points of input function between t=0 and t=ti
-        t_in_cut = np.array([0.0])
-        t_in_cut = np.append(t_in_cut, t_in[t_in < ti])
-        t_in_cut = np.append(t_in_cut, ti)
+        # The integrand is infunc(tau) * IRF(ti-tau)
+        def integrand(tau: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+            return (np.interp(tau, t_in, in_func, left=0.0) *
+                    irf_normconst(ti - tau, **kwargs))
 
-        # Get input function samples between t=0 and t=ti
-        f_in_cut = np.array([0.0])
-        f_in_cut = np.append(f_in_cut, in_func[t_in < ti])
-        f_in_cut = np.append(f_in_cut, np.interp(ti, t_in, in_func))
+        # We integrate each step of the input function separately
+        j = 0
+        while t_in[j + 1] < ti:
+            y = scipy.integrate.quad(integrand, t_in[j], t_in[j + 1])
+            res[i] += y[0]
+            j = j + 1
 
-        # IRF needs to be evaluated at ti - tau, where tau is the time
-        # points of the input function samples.
-        # This interpolates the IRF between these points, which creates an
-        # error...
-
-        # Normcdf argument:
-        irf_t = ((ti - t_in_cut) - ext1)/(math.sqrt(2.0) * wid1)
-
-        # Calculate normcdf using error function (seems to be much quicker)
-        cdf = 0.5 * (1.0 + scipy.special.erf(irf_t))
-
-        # Calculate input response function
-        irf = (amp2 + (amp1 - amp2) * (1.0 - cdf))
-
-        # Compute convolution
-        res[i] = scipy.integrate.trapezoid(irf*f_in_cut, t_in_cut)
+        # add last step from t[j] to ti
+        y = scipy.integrate.quad(integrand, t_in[j], ti)
+        res[i] += y[0]
 
     return res

@@ -20,10 +20,7 @@ def irf_stepnorm(
     cdf = 0.5 * (1.0 + scipy.special.erf(tt))
 
     # Calculate input response function
-    res = amp2 * (1.0 - cdf)
-    for i in range(len(t)):
-        if t[i] < ext1:
-            res[i] += (amp1 - amp2)
+    res = amp2 * (1.0 - cdf) + (amp1 - amp2) * (t < ext1)
     return np.array(res)
 
 
@@ -97,43 +94,26 @@ def model_stepnorm(
 
     res = np.zeros_like(t_out)
 
-    # Unpack parameters
-    ext1 = kwargs['extent1']
-    amp1 = kwargs['amp1']
-    wid2 = kwargs['width2']
-    amp2 = kwargs['amp2']
-    ext2 = kwargs['extent2']
-
     for i in range(0, res.size):
+        # For each time point the integrand is integrated.
 
         # Get current time point
         ti = t_out[i]
 
-        # We split the integral up into two parts, before and after extent1:
-        t1, f1, t2, f2 = _split_arrays(t_in, in_func, ti, ext1)
+        # The integrand is infunc(tau) * IRF(ti-tau)
+        def integrand(tau: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+            return (np.interp(tau, t_in, in_func, left=0.0) *
+                    irf_stepnorm(ti - tau, **kwargs))
 
-        # Evaluate integral of input function from t=ti-ext1 to t=ti
-        y2 = scipy.integrate.trapezoid(f2, t2)
+        # We integrate each step of the input function separately
+        j = 0
+        while t_in[j + 1] < ti:
+            y = scipy.integrate.quad(integrand, t_in[j], t_in[j + 1])
+            res[i] += y[0]
+            j = j + 1
 
-        # Evalute integral from t=0 to t=ti-ext1
-
-        # IRF needs to be evaluated at ti - tau, where tau is the time
-        # points of the input function samples (t1).
-        # This interpolates the IRF between these points, which creates an
-        # error...
-
-        # Normcdf argument:
-        irf_t = ((ti - t1) - ext2)/(math.sqrt(2.0) * wid2)
-
-        # Calculate normcdf using error function (seems to be much quicker)
-        cdf = 0.5 * (1.0 + scipy.special.erf(irf_t))
-
-        # Calculate input response function
-        irf = amp2 * (1.0 - cdf)
-
-        # Compute convolution
-        y1 = scipy.integrate.trapezoid(irf*f1, t1)
-
-        res[i] = amp1 * y2 + y1
+        # add last step from t[j] to ti
+        y = scipy.integrate.quad(integrand, t_in[j], ti)
+        res[i] += y[0]
 
     return res
