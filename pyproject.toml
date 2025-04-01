@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tacfit"
-version = "1.3.1"
+version = "1.2.3"
 requires-python = ">= 3.9"
 authors = [
 	{name = "Chris Walther Andersen", email = "cwa@rsyd.dk"},
