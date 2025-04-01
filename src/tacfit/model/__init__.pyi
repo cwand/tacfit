@@ -50,3 +50,13 @@ def model_stepnorm(
 def irf_stepnorm(
         t: npt.NDArray[np.float64],
         **kwargs: float) -> npt.NDArray[np.float64]: ...
+
+def model_norm2(
+        t_in: npt.NDArray[np.float64],
+        in_func: npt.NDArray[np.float64],
+        t_out: npt.NDArray[np.float64],
+        **kwargs: float) -> npt.NDArray[np.float64]: ...
+
+def irf_norm2(
+        t: npt.NDArray[np.float64],
+        **kwargs: float) -> npt.NDArray[np.float64]: ...

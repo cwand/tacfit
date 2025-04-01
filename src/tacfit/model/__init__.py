@@ -3,6 +3,7 @@ from .stepconst import model_stepconst, irf_stepconst
 from .delay import model_delay, irf_delay
 from .normconst import model_normconst, irf_normconst
 from .stepnorm import model_stepnorm, irf_stepnorm
+from .norm2 import model_norm2, irf_norm2
 
 __all__ = ["model_delay",
            "irf_delay",
@@ -13,4 +14,6 @@ __all__ = ["model_delay",
            "model_normconst",
            "irf_normconst",
            "model_stepnorm",
-           "irf_stepnorm"]
+           "irf_stepnorm",
+           "model_norm2",
+           "irf_norm2"]

@@ -21,6 +21,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                               npt.NDArray[np.float64]],
                 tcut: Optional[Union[int, list[int]]] = None,
                 delay: Optional[float] = None,
+                confint: bool = True,
                 output: Optional[str] = None) -> None:
     """Fit a model to measured TAC data using lmfit.
     This minimised the sum of squared residuals using the least-squares method
@@ -112,9 +113,10 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
             lmfit.report_fit(res)
 
-            print("[[Confidence Intervals]]")
-            ci_report = res.ci_report()
-            print(ci_report)
+            if confint:
+                print("[[Confidence Intervals]]")
+                ci_report = res.ci_report()
+                print(ci_report)
 
             # Show best fitting IRF:
             fig, ax = plt.subplots()

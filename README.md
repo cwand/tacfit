@@ -115,6 +115,21 @@ values are just examples):
 --param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0
 ```
 
+
+#### The normconst model
+Similar to the ```stepconst``` model, except the transition from $a_1$ to 
+$a_2$ is smoothed:\
+$$R(t) = (a_1 - a_2) (1 - \Phi(t, t_1, w_1)) + a_2,$$\
+where $\Phi(t, t_1, w_1)$ is the cumulative normal distribution function 
+centered at $t_1$ with standard deviation $w_1$\
+$$\Phi(t, t_1, w_1) = \int_{-\infty}^t \frac{1}{\sqrt{2\pi w_1^2}} 
+\exp\left( -\frac{(s - t_1)^2}{2w_1^2} \right) ds.$$\
+The parameters are specified in ```tacfit``` as (numerical 
+values are just examples):
+```
+--param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0 --param width1 2.0 0.0 5.0
+```
+
 #### The step2 model
 An extension of the ```stepconst``` model, where the impulse response function 
 drops to 0 after some time $\mathrm{extent2}$:\
@@ -128,6 +143,27 @@ The parameters are specified in ```tacfit``` as (numerical values are just
 examples):
 ```
 --param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0 --param extent2 100 0.0 500
+```
+
+#### The stepnorm model
+Similar to the ```step2``` model, except the transition from $a_2$ to 0 is
+smoothed similarly to the ```normconst``` model:\
+$$R(t) = (a_1 - a_2) (1 - H(t - t_1)) + a_2 (1 - \Phi(t, t_2, w_2)),$$\
+where $H(t)$ is the Heaviside step function.
+The parameters are specified in ```tacfit``` as (numerical values are just 
+examples):
+```
+--param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0 --param extent2 100 0.0 500 --param width2 10 0 100
+```
+
+#### The norm2 model
+Similar to the ```step2``` and ```stepnorm``` model, except both transitions
+are smoothed:\
+$$R(t) = (a_1 - a_2) (1 - \Phi(t, t_1, w_1)) + a_2 (1 - \Phi(t, t_2, w_2)),$$\
+The parameters are specified in ```tacfit``` as (numerical values are just 
+examples):
+```
+--param amp1 0.1 0.0 0.5 --param amp2 0.01 0.0 0.1 --param extent1 10 0.0 100.0 --param extent2 100 0.0 500 --param width1 2 0 10 --param width2 10 0 100
 ```
 
 ### Setting parameters
