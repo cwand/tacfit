@@ -43,6 +43,11 @@ class TestModelNormconst(unittest.TestCase):
                                       t_in=tin, in_func=in_func,
                                       t_out=t_out)
 
-        m_exp = np.array([0.0, 0.6, 25.43, 49.15])
+        print(m)
 
-        self.assertTrue(np.all(np.abs(m - m_exp) < 0.5))
+        m_exp = np.array([0.0,
+                          0.599925578257793,
+                          25.452795897504856,
+                          49.151466932205331])
+
+        self.assertTrue(np.all(np.abs(m - m_exp) < 0.00001))

@@ -114,9 +114,9 @@ class TestSplitArrays(unittest.TestCase):
         self.assertTrue(np.all(np.abs(arr4 - arr4_exp) < 0.0000001))
 
 
-class TestModelNormconst(unittest.TestCase):
+class TestModelStepnorm(unittest.TestCase):
 
-    def test_model_normconst_case1(self):
+    def test_model_stepnorm_case1(self):
         amp1 = 0.3
         amp2 = 0.1
         extent1 = 4.0
@@ -134,7 +134,18 @@ class TestModelNormconst(unittest.TestCase):
                                     t_in=tin, in_func=in_fnc,
                                     t_out=t_out)
 
-        m_exp = np.array([0.0, 0.6, 25.85, 49.54, 36.71, 35.26,
-                          36.18, 35.25, 29.19, 22.72, 18.18])
+        print(m)
 
-        self.assertTrue(np.all(np.abs(m - m_exp) < 0.5))
+        m_exp = np.array([0.0,
+                          0.599999999993591,
+                          25.849988266065488,
+                          49.549943215866591,
+                          36.708635516964897,
+                          35.257596102595855,
+                          36.175818939187614,
+                          35.249291410756392,
+                          29.193831488608613,
+                          22.718937741431429,
+                          18.175410261905824])
+
+        self.assertTrue(np.all(np.abs(m - m_exp) < 0.01))
