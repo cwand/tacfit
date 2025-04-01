@@ -72,6 +72,10 @@ def main(sys_args: list[str]):
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
+    parser.add_argument("--no_confint", action='store_false',
+                        help="Skips computation of confidence intervals when"
+                             "using leastsq, which can be an expensive"
+                             "computation in some models.")
     parser.add_argument("--mcpost", action='store_true',
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
@@ -187,8 +191,14 @@ def main(sys_args: list[str]):
         "stepnorm": {
             'func': tacfit.model.model_stepnorm,
             'irf': tacfit.model.irf_stepnorm,
-            'desc': "Step function followed by smooth transition to 0"
+            'desc': "Step function followed by smooth transition to 0 "
                     "(amp1, extent1, amp2, extent2, width2)."
+        },
+        "norm2": {
+            'func': tacfit.model.model_norm2,
+            'irf': tacfit.model.irf_norm2,
+            'desc': "Two smooth transitions between amp1, amp2 and 0 "
+                    "(amp1, extent1, width1, amp2, extent2, width2)."
         }
     }
 
@@ -261,6 +271,7 @@ def main(sys_args: list[str]):
                            irf=models[model_str]['irf'],  # type: ignore
                            output=output,
                            tcut=tcut,
+                           confint=args.no_confint,
                            delay=tdelay)
         print()
 
