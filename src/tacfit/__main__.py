@@ -63,6 +63,11 @@ def main(sys_args: list[str]):
                              "in --list_models. Use \"x\" to indicate no "
                              "bound. Each parameter in the model is set with "
                              "a separate --param.")
+    parser.add_argument("--exprparam", action='append', nargs=2,
+                        metavar=("PAR", "EXPR"),
+                        help="Set a model parameter to a fixed exression (i.e."
+                             "not fitted), which may involve other model"
+                             "parameters.")
     parser.add_argument("--leastsq", action='store_true',
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
@@ -204,18 +209,31 @@ def main(sys_args: list[str]):
     # Get parameters:
     if args.param is not None:
         params = _create_params(args.param)
-        print("Parameter settings:")
+    else:
+        params = {}
+
+    if args.exprparam is not None:
+        for exprparam in args.exprparam:
+            name = exprparam[0]
+            expr = exprparam[1]
+            params[name] = {'expr': expr}
+
+    print("Parameter settings:")
+    if len(params) > 0:
         for param in params:
             print(f'  {param}:')
-            param_value = params[param]['value']
-            param_min = params[param]['min']
-            param_max = params[param]['max']
-            print(f'     value: {param_value}')
-            print(f'     min:   {param_min}')
-            print(f'     max:   {param_max}')
+            if 'value' in params[param]:
+                param_value = params[param]['value']
+                param_min = params[param]['min']
+                param_max = params[param]['max']
+                print(f'     value: {param_value}')
+                print(f'     min:   {param_min}')
+                print(f'     max:   {param_max}')
+            else:
+                param_expr = params[param]['expr']
+                print(f'     expr:  {param_expr}')
     else:
-        print("No model parameters specified.")
-        params = {}
+        print("No parameters given.")
     print()
 
     # Set RNG-seed if chosen

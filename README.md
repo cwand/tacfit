@@ -131,8 +131,8 @@ examples):
 ```
 
 ### Setting parameters
-Each paramater of the model must be given an initial value and bounds for the 
-fitting procedure.
+Each fitting parameter of the model must be given an initial value and bounds
+for the fitting procedure.
 This is done using the ```--param``` option once for all parameters. For 
 example for the ```stepconst``` model:
 ```
@@ -143,6 +143,16 @@ parameter ```amp1``` is initialised to the value ```0.2```, has a minimum value
 of ```0``` and no upper bound. The parameter ```extent1``` has neither upper 
 nor lower bounds.
 All parameters must have an initial value though.
+
+It is also possible to add "fixed" parameters to the model, i.e. parameters
+that should not be varied during the fit. To do this, use the ```--exprparam```
+option:
+```
+--param amp1 0.2 0 x --exprparam amp2 "0.1 * amp1" --exprparam extent1 10.0
+```
+This will fit only one parameter of the ```stepconst``` model (```amp1```), 
+while ```amp2``` is kept fixed at 10% of ```amp1``` and ```extent1``` is set
+to the value 10.0.
 
 ### Exclude data
 It is possible to only include a subset of the data by using the 
