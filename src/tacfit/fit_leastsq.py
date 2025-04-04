@@ -144,8 +144,10 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                              **res.best_values)
 
             fig, ax = plt.subplots()
-            ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
-            ax.plot(input_time, input_data, 'rx--', label=labels['input'])
+            ax.plot(time_data[0:t_cut[i]], tissue_data[0:t_cut[i]],
+                    'gx', label=labels['tissue'])
+            ax.plot(input_time[0:t_cut[i]], input_data[0:t_cut[i]],
+                    'rx--', label=labels['input'])
             ax.plot(time_data[0:t_cut[i]], best_fit, 'k-', label="Fit")
 
             ax.set_xlabel('Time [sec]')

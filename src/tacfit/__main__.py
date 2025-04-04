@@ -110,9 +110,15 @@ def main(sys_args: list[str]):
                              "parameters.")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
-    parser.add_argument("--save_figs", nargs=1, metavar="PATH",
+    parser.add_argument("--save_figs", metavar="PATH",
+                        type=str,
                         help="Save figures to the given path rather than "
-                             "showing them.")
+                             "showing them. "
+                             "[DEPRECATED: instead use --save_output]")
+    parser.add_argument("--save_output", metavar="PATH",
+                        type=str,
+                        help="Save output to the given path and don't show "
+                             "figures to the screen.")
 
     args = parser.parse_args(sys_args)
 
@@ -257,10 +263,16 @@ def main(sys_args: list[str]):
     # Fit least squares if required
     if args.leastsq:
         print("Starting least squares fitting.")
-        if args.save_figs is None:
-            output = None
-        else:
-            output = args.save_figs[0]
+        output = None
+        if args.save_output is not None:
+            output = args.save_output
+        elif args.save_figs is not None:
+            print("WARNING: --save_figs is deprecated and will be removed. "
+                  "Instead use --save_output.")
+            output = args.save_figs
+        print(output)
+
+
         tacfit.fit_leastsq(tac[args.time_label],
                            tac[args.tissue_label],
                            tac[args.input_label],
