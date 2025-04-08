@@ -78,30 +78,9 @@ Below the various options and settings of ```tacfit``` are explained in detail.
 
 
 ### Models
-The models currently implemented in tacfit are
-* delay
-* stepconst
-* step2
 
 The list of implemented models and their descriptions can be seen by using the
 ```--list_models``` option.
-
-#### The delay model
-The intent of this model is to be able to estimate the delay between the 
-measured input function signal and the
-actual input function (i.e. the activity concentration in the blood entering 
-the tissue) from the very early part of the time-activity-curves. The impulse 
-response function is simply a constant. However, a variable delay is added to 
-the input function before integration, and this variable is also fitted. 
-The fitted tissue model is then\
-$$M(t) = k \int_0^t C_{\mathrm{a}}(\tau-t_\mathrm{d}) d \tau,$$\
-where $C_{\mathrm{a}}(t)$ is the measured input function and $k$ and 
-$t_{\mathrm{d}}$ are the fitting parameters.
-The parameters are specified in ```tacfit``` as (numerical values are just 
-examples):
-```
---param k 0.1 0.0 1.0 --param delay 1.0 0.0 10.0
-```
 
 #### The stepconst model
 In this model, the impulse response function $R(t)$ is\
@@ -195,9 +174,18 @@ It is possible to only include a subset of the data by using the
 ```--tcut N``` option, where N is an integer describing the number of data 
 points that should be included in the fit.
 
+It is possible to scan over a range of different tcut-values, by giving more
+than one value: ```--tcut N1 N2 ...```. In this case, a plot is shown after
+the fit with the optimal parameter values for each tcut. To hide the progress
+bar, use the option ```--hideprogress``` (useful if piping output to a file).
+
 ### Delayed input function
-To apply a time delay on the input function use the ```--delay D```, where 
-```D``` is a float describing the delay in seconds.
+To apply a fixed time delay on the input function use the ```--delay D```, 
+where ```D``` is a float describing the delay in seconds. Alternatively the
+input function delay can be treated as a free fitting parameter. To do this,
+add an extra parameter like this:
+```--param _delay 1.5 0.0 10.0``` (numerical values are examples, and an 
+```x``` can also be used here to specify no bounds.)
 
 ### Save figures to files
 As default, figures are shown on the screen. If the figures should instead be 
@@ -275,7 +263,7 @@ The new options are:
   autocorrelation).
 * ```--mc_error```: The error model to use.
 * ```--mc_threads```: The number of threads to start
-* ```--mc_hideprogress```: Hides the progress bar, useful if output is piped to 
+* ```--hideprogress```: Hides the progress bar, useful if output is piped to 
   a file.
 * ```--rng_seed```: Sets the RNG-seed, to be able to reproduce results.
 
