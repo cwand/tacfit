@@ -4,6 +4,7 @@ from typing import Callable, Optional, Union
 import numpy as np
 import numpy.typing as npt
 import os
+import tacfit.model.integrate as integrate
 
 
 def _print_fit(result: lmfit.model.ModelResult,
@@ -22,15 +23,10 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
                 input_data: npt.NDArray[np.float64],
                 model: Callable[[npt.NDArray[np.float64],
-                                 npt.NDArray[np.float64],
-                                 npt.NDArray[np.float64],
                                  dict[str, float]],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
-                irf: Callable[[npt.NDArray[np.float64],
-                               dict[str, float]],
-                              npt.NDArray[np.float64]],
                 tcut: Optional[Union[int, list[int]]] = None,
                 delay: Optional[float] = None,
                 confint: bool = True,
@@ -45,7 +41,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     time_data   --  Array of time data
     tissue_data --  Array of measured tissue data
     input_data  --  Array of measured input function data
-    model       --  The model to fit to the data
+    model       --  The IRF-model to fit to the data
     params      --  Dict object setting initial values and bounds for the
                     parameters of the model. It must be structured like
                     {'param1': {'value': ...,
@@ -109,15 +105,16 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         parameters = lmfit.create_params(**params)
 
         # Define model to fit
-        fit_model = lmfit.Model(model,
+        fit_model = lmfit.Model(integrate.model,
                                 independent_vars=['t_in', 'in_func',
-                                                  't_out'])
+                                                  't_out', 'irf'])
 
         # Run fit from initial values
         res = fit_model.fit(tissue_data[0:t_cut[i]],
                             t_in=input_time[0:t_cut[i]],
                             in_func=input_data[0:t_cut[i]],
                             t_out=time_data[0:t_cut[i]],
+                            irf=model,
                             params=parameters)
 
         if single_fit:
@@ -134,7 +131,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             fig, ax = plt.subplots()
             tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[t_cut],
                                                     0.01)
-            best_irf = irf(tt, **res.best_values)  # type: ignore
+            best_irf = model(tt, **res.best_values)  # type: ignore
             ax.plot(tt, best_irf, 'k-', label="Fitted IRF")
 
             ax.set_xlabel('Time [sec]')
@@ -150,10 +147,11 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 plt.clf()
 
             # Calculate best fitting model
-            best_fit = model(t_in=input_time,  # type: ignore
-                             in_func=input_data,
-                             t_out=time_data[0:t_cut[i]],
-                             **res.best_values)
+            best_fit = integrate.model(input_time,
+                                       input_data,
+                                       time_data[0:t_cut[i]],
+                                       model,
+                                       **res.best_values)
 
             fig, ax = plt.subplots()
             ax.plot(time_data[0:t_cut[i]], tissue_data[0:t_cut[i]],

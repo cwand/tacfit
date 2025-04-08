@@ -110,11 +110,6 @@ def main(sys_args: list[str]):
                              "parameters.")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
-    parser.add_argument("--save_figs", metavar="PATH",
-                        type=str,
-                        help="Save figures to the given path rather than "
-                             "showing them. "
-                             "[DEPRECATED: instead use --save_output]")
     parser.add_argument("--save_output", metavar="PATH",
                         type=str,
                         help="Save output to the given path and don't show "
@@ -174,34 +169,24 @@ def main(sys_args: list[str]):
             'irf': lambda x: 1,
             'desc': "Mock model, used when no modelling is required"
         },
-        "delay": {
-            'func': tacfit.model.model_delay,
-            'irf': tacfit.model.irf_delay,
-            'desc': "Constant with input function delay "
-                    "(delay, k)."},
         "step2": {
-            'func':  tacfit.model.model_step2,
             'irf': tacfit.model.irf_step2,
             'desc':  "Two step functions "
                      "(amp1, extent1, amp2, extent2)."},
         "stepconst": {
-            'func': tacfit.model.model_stepconst,
             'irf': tacfit.model.irf_stepconst,
             'desc': "Step function followed by constant "
                     "(amp1, extent1, amp2)."},
         "normconst": {
-            'func': tacfit.model.model_normconst,
             'irf': tacfit.model.irf_normconst,
             'desc': "Smooth transition to constant "
                     "(amp1, extent1, width1, amp2)."},
         "stepnorm": {
-            'func': tacfit.model.model_stepnorm,
             'irf': tacfit.model.irf_stepnorm,
             'desc': "Step function followed by smooth transition to 0 "
                     "(amp1, extent1, amp2, extent2, width2)."
         },
         "norm2": {
-            'func': tacfit.model.model_norm2,
             'irf': tacfit.model.irf_norm2,
             'desc': "Two smooth transitions between amp1, amp2 and 0 "
                     "(amp1, extent1, width1, amp2, extent2, width2)."
@@ -266,20 +251,15 @@ def main(sys_args: list[str]):
         output = None
         if args.save_output is not None:
             output = args.save_output
-        elif args.save_figs is not None:
-            print("WARNING: --save_figs is deprecated and will be removed. "
-                  "Instead use --save_output.")
-            output = args.save_figs
 
 
         tacfit.fit_leastsq(tac[args.time_label],
                            tac[args.tissue_label],
                            tac[args.input_label],
-                           models[model_str]['func'],  # type: ignore
+                           models[model_str]['irf'],
                            params,
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
-                           irf=models[model_str]['irf'],  # type: ignore
                            output=output,
                            tcut=tcut,
                            confint=args.no_confint,

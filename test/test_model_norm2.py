@@ -1,4 +1,5 @@
 import tacfit.model.norm2 as norm2
+import tacfit.model.integrate as integrate
 import numpy as np
 import unittest
 
@@ -18,8 +19,6 @@ class TestIRFNorm2(unittest.TestCase):
 
         m = norm2.irf_norm2(t, amp1=amp1, amp2=amp2, extent1=extent1,
                             width1=wid1, extent2=extent2, width2=wid2)
-
-        print(m)
 
         m_exp = np.array([0.499999999605365,
                           0.331703883775579,
@@ -50,10 +49,9 @@ class TestModelNorm2(unittest.TestCase):
 
         t_out = np.array([0.0, 2.9, 3.1, 5.0, 9.0, 13.0, 15.0, 16.0, 19.0])
 
-        m = norm2.model_norm2(amp1=amp1, extent1=extent1, width1=wid1,
-                              amp2=amp2, extent2=extent2, width2=wid2,
-                              t_in=tin, in_func=in_func,
-                              t_out=t_out)
+        m = integrate.model(tin, in_func, t_out, norm2.irf_norm2,
+                            amp1=amp1, amp2=amp2, extent1=extent1,
+                            extent2=extent2, width1=wid1, width2=wid2)
 
         m_exp = np.array([0.0,
                           8.818130754879661,
@@ -64,7 +62,5 @@ class TestModelNorm2(unittest.TestCase):
                           27.480718253032361,
                           23.089609674874218,
                           13.647991536815924])
-
-        print(m)
 
         self.assertTrue(np.all(np.abs(m - m_exp) < 0.0001))
