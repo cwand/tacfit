@@ -24,7 +24,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tcut: Optional[Union[int, list[int]]] = ...,
                 delay: Optional[float] = ...,
                 confint: bool = ...,
-                output: Optional[str] = ...) -> None: ...
+                output: Optional[str] = ...,
+                progress: bool = ...) -> None: ...
 
 
 def mc_sample(time_data: npt.NDArray[np.float64],

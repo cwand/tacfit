@@ -5,24 +5,37 @@ import numpy as np
 import numpy.typing as npt
 import os
 
+from tqdm import tqdm
+
+import tacfit.model.integrate as integrate
+
+
+def _print_fit(result: lmfit.model.ModelResult,
+               delay: float,
+               tcut: int,
+               path: str):
+    with open(path, "w") as f:
+        f.write(f'r^2\t{result.rsquared}\n')
+        f.write(f'delay\t{delay}\n')
+        f.write(f'tcut\t{tcut}\n')
+        for param in result.params:
+            f.write(f'{param}\t{result.params[param].value}\t'
+                    f'{result.params[param].stderr}\n')
+
 
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
                 input_data: npt.NDArray[np.float64],
                 model: Callable[[npt.NDArray[np.float64],
-                                 npt.NDArray[np.float64],
-                                 npt.NDArray[np.float64],
                                  dict[str, float]],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
-                irf: Callable[[npt.NDArray[np.float64],
-                               dict[str, float]],
-                              npt.NDArray[np.float64]],
                 tcut: Optional[Union[int, list[int]]] = None,
                 delay: Optional[float] = None,
                 confint: bool = True,
-                output: Optional[str] = None) -> None:
+                output: Optional[str] = None,
+                progress: bool = True) -> None:
     """Fit a model to measured TAC data using lmfit.
     This minimised the sum of squared residuals using the least-squares method
     of the lmfit package. The residuals are defined as the distance between the
@@ -33,7 +46,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     time_data   --  Array of time data
     tissue_data --  Array of measured tissue data
     input_data  --  Array of measured input function data
-    model       --  The model to fit to the data
+    model       --  The IRF-model to fit to the data
     params      --  Dict object setting initial values and bounds for the
                     parameters of the model. It must be structured like
                     {'param1': {'value': ...,
@@ -55,119 +68,134 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     output      --  If None, plots are shown on the screen.
                     If a path is given, plots are saved to files on that
                     path.
+    progress    --  Whether to show a progress bar if doing a scan
     """
-
-    # Whether we do a single fit or a scan over tcut and/or tdelay
-    single_fit = True
-
-    # Input sanitation:
-
-    # If tcut is None set it to use all data points
-    t_cut = [time_data.size]
-    if isinstance(tcut, int):
-        # An int was given as tcut: use as single value for t_cut
-        t_cut = [tcut]
-    elif isinstance(tcut, list):
-        # A list was given: fit all values in the list
-        single_fit = False
-        t_cut = tcut
 
     # If delay is None, use the value 0.0 (no delay)
     t_d = 0.0
     if delay is not None:
-        # A float was given as tcut: use as single value
         t_d = delay
-
     # Make new input function from this delay:
     input_time = time_data + t_d
 
-    # Make arrays for multi-fit mode
-    param_idx = {}
-    idx = 0
-    for param in params:
-        param_idx[param] = idx
-        idx = idx + 1
-    r2s = np.zeros(len(t_cut))
-    scan_res = np.zeros((2*len(params), len(t_cut)))
+    if tcut is None:
+        # Use all data if not cut-off is set
+        tcut = len(time_data)
 
-    for i in range(len(t_cut)):
-        # Iterate over tcuts
+    if isinstance(tcut, int):
 
         # Create lmfit Parameters-object
         parameters = lmfit.create_params(**params)
 
         # Define model to fit
-        fit_model = lmfit.Model(model,
+        fit_model = lmfit.Model(integrate.model,
                                 independent_vars=['t_in', 'in_func',
-                                                  't_out'])
+                                                  't_out', 'irf'])
 
         # Run fit from initial values
-        res = fit_model.fit(tissue_data[0:t_cut[i]],
-                            t_in=input_time[0:t_cut[i]],
-                            in_func=input_data[0:t_cut[i]],
-                            t_out=time_data[0:t_cut[i]],
+        res = fit_model.fit(tissue_data[0:tcut],
+                            t_in=input_time[0:tcut],
+                            in_func=input_data[0:tcut],
+                            t_out=time_data[0:tcut],
+                            irf=model,
                             params=parameters)
 
-        if single_fit:
-            # Report and plot result of fit
+        # Report and plot result of fit
 
-            lmfit.report_fit(res)
+        lmfit.report_fit(res)
 
-            if confint:
-                print("[[Confidence Intervals]]")
-                ci_report = res.ci_report()
-                print(ci_report)
+        if confint:
+            print("[[Confidence Intervals]]")
+            ci_report = res.ci_report()
+            print(ci_report)
 
-            # Show best fitting IRF:
-            fig, ax = plt.subplots()
-            tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[t_cut],
-                                                    0.01)
-            best_irf = irf(tt, **res.best_values)  # type: ignore
-            ax.plot(tt, best_irf, 'k-', label="Fitted IRF")
+        # Show best fitting IRF:
+        fig, ax = plt.subplots()
+        tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[tcut],
+                                                0.01)
+        best_irf = model(tt, **res.best_values)  # type: ignore
+        ax.plot(tt, best_irf, 'k-', label="Fitted IRF")
 
-            ax.set_xlabel('Time [sec]')
-            ax.set_ylabel('IRF')
+        ax.set_xlabel('Time [sec]')
+        ax.set_ylabel('IRF')
 
-            plt.legend()
-            plt.grid(visible=True)
-            if output is None:
-                plt.show()
-            else:
-                fit_png_path = os.path.join(output, "irf.png")
-                plt.savefig(fit_png_path)
-                plt.clf()
-
-            # Calculate best fitting model
-            best_fit = model(t_in=input_time,  # type: ignore
-                             in_func=input_data,
-                             t_out=time_data[0:t_cut[i]],
-                             **res.best_values)
-
-            fig, ax = plt.subplots()
-            ax.plot(time_data, tissue_data, 'gx', label=labels['tissue'])
-            ax.plot(input_time, input_data, 'rx--', label=labels['input'])
-            ax.plot(time_data[0:t_cut[i]], best_fit, 'k-', label="Fit")
-
-            ax.set_xlabel('Time [sec]')
-            ax.set_ylabel('Mean ROI-activity concentration')
-
-            plt.legend()
-            plt.grid(visible=True)
-            if output is None:
-                plt.show()
-            else:
-                fit_png_path = os.path.join(output, "fit.png")
-                plt.savefig(fit_png_path)
-                plt.clf()
-
+        plt.legend()
+        plt.grid(visible=True)
+        if output is None:
+            plt.show()
         else:
+            fit_png_path = os.path.join(output, "irf.png")
+            plt.savefig(fit_png_path)
+            plt.clf()
+
+        # Calculate best fitting model
+        best_fit = integrate.model(input_time,
+                                   input_data,
+                                   time_data[0:tcut],
+                                   model,
+                                   **res.best_values)
+
+        # Plot results
+        if '_delay' in params:
+            input_time = input_time + res.best_values['_delay']
+        fig, ax = plt.subplots()
+        ax.plot(time_data[0:tcut], tissue_data[0:tcut],
+                'gx', label=labels['tissue'])
+        ax.plot(input_time[0:tcut], input_data[0:tcut],
+                'rx--', label=labels['input'])
+        ax.plot(time_data[0:tcut], best_fit, 'k-', label="Fit")
+
+        ax.set_xlabel('Time [sec]')
+        ax.set_ylabel('Mean ROI-activity concentration')
+
+        plt.legend()
+        plt.grid(visible=True)
+        if output is None:
+            plt.show()
+        else:
+            _print_fit(res,
+                       t_d,
+                       tcut,
+                       os.path.join(output, "result.txt"))
+            fit_png_path = os.path.join(output, "fit.png")
+            plt.savefig(fit_png_path)
+            plt.clf()
+
+    else:
+
+        # Make arrays for multi-fit mode
+        param_idx = {}
+        idx = 0
+        for param in params:
+            param_idx[param] = idx
+            idx = idx + 1
+        r2s = np.zeros(len(tcut))
+        scan_res = np.zeros((2 * len(params), len(tcut)))
+
+        for i in tqdm(range(len(tcut)), disable=(not progress)):
+            # Iterate over tcuts
+
+            # Create lmfit Parameters-object
+            parameters = lmfit.create_params(**params)
+
+            # Define model to fit
+            fit_model = lmfit.Model(integrate.model,
+                                    independent_vars=['t_in', 'in_func',
+                                                      't_out', 'irf'])
+
+            # Run fit from initial values
+            res = fit_model.fit(tissue_data[0:tcut[i]],
+                                t_in=input_time[0:tcut[i]],
+                                in_func=input_data[0:tcut[i]],
+                                t_out=time_data[0:tcut[i]],
+                                irf=model,
+                                params=parameters)
+
             # Save results of fit before moving on to next tcut
             for param in params:
                 scan_res[2*param_idx[param]][i] = res.params[param].value
                 scan_res[2*param_idx[param] + 1][i] = res.params[param].stderr
             r2s[i] = res.rsquared
-
-    if not single_fit:
 
         # Make a plot showing the fit scan
         n_params = len(params)
@@ -178,7 +206,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         for param in params:
             axs[i].set_ylabel(param)
             axs[i].errorbar(
-                 t_cut,
+                 tcut,
                  scan_res[2*param_idx[param]],
                  yerr=scan_res[2*param_idx[param] + 1],
                  fmt='s',
@@ -191,7 +219,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         axs[i].set_ylabel('r^2')
         axs[i].set_xlabel('tcut')
         axs[i].scatter(
-             t_cut,
+             tcut,
              r2s,
              marker='x'
         )
@@ -201,4 +229,9 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         axs[i].grid(which='major', alpha=0.5)
         axs[i].grid(axis='y', which='minor', alpha=0.2)
 
-        plt.show()
+        if output is None:
+            plt.show()
+        else:
+            fit_png_path = os.path.join(output, "scan.png")
+            plt.savefig(fit_png_path)
+            plt.clf()

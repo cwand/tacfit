@@ -1,4 +1,5 @@
 import tacfit.model.normconst as normconst
+import tacfit.model.integrate as integrate
 import numpy as np
 import unittest
 
@@ -38,12 +39,9 @@ class TestModelNormconst(unittest.TestCase):
 
         t_out = np.array([0.0, 1.0, 5.0, 9.0])
 
-        m = normconst.model_normconst(amp1=amp, extent1=extent, width1=width,
-                                      amp2=amp2,
-                                      t_in=tin, in_func=in_func,
-                                      t_out=t_out)
-
-        print(m)
+        m = integrate.model(tin, in_func, t_out,
+                            normconst.irf_normconst,  # type: ignore
+                            amp1=amp, amp2=amp2, extent1=extent, width1=width)
 
         m_exp = np.array([0.0,
                           0.599925578257793,

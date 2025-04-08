@@ -1,19 +1,13 @@
-from .step2 import model_step2, irf_step2
-from .stepconst import model_stepconst, irf_stepconst
-from .delay import model_delay, irf_delay
-from .normconst import model_normconst, irf_normconst
-from .stepnorm import model_stepnorm, irf_stepnorm
-from .norm2 import model_norm2, irf_norm2
+from .step2 import irf_step2
+from .stepconst import irf_stepconst
+from .normconst import irf_normconst
+from .stepnorm import irf_stepnorm
+from .norm2 import irf_norm2
+from .integrate import model
 
-__all__ = ["model_delay",
-           "irf_delay",
-           "model_step2",
-           "irf_step2",
-           "model_stepconst",
+__all__ = ["irf_step2",
            "irf_stepconst",
-           "model_normconst",
            "irf_normconst",
-           "model_stepnorm",
            "irf_stepnorm",
-           "model_norm2",
-           "irf_norm2"]
+           "irf_norm2",
+           "model"]

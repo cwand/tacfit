@@ -99,8 +99,8 @@ def main(sys_args: list[str]):
     parser.add_argument("--mc_threads", type=int, metavar="N",
                         help="Use N threads to run the monte carlo search ("
                              "required when using --mcpost).")
-    parser.add_argument("--mc_hideprogress", action='store_false',
-                        help="Hides the progress bar when using --mcpost.")
+    parser.add_argument("--hideprogress", action='store_false',
+                        help="Hides progress bars.")
     parser.add_argument("--rng_seed", type=int,
                         help="Set the RNG seed. If no seed is provided the "
                              "seed will be set automatically from "
@@ -110,9 +110,10 @@ def main(sys_args: list[str]):
                              "parameters.")
     parser.add_argument("--plot_nofit", action='store_true',
                         help="Show data plot without fitting")
-    parser.add_argument("--save_figs", nargs=1, metavar="PATH",
-                        help="Save figures to the given path rather than "
-                             "showing them.")
+    parser.add_argument("--save_output", metavar="PATH",
+                        type=str,
+                        help="Save output to the given path and don't show "
+                             "figures to the screen.")
 
     args = parser.parse_args(sys_args)
 
@@ -168,34 +169,24 @@ def main(sys_args: list[str]):
             'irf': lambda x: 1,
             'desc': "Mock model, used when no modelling is required"
         },
-        "delay": {
-            'func': tacfit.model.model_delay,
-            'irf': tacfit.model.irf_delay,
-            'desc': "Constant with input function delay "
-                    "(delay, k)."},
         "step2": {
-            'func':  tacfit.model.model_step2,
             'irf': tacfit.model.irf_step2,
             'desc':  "Two step functions "
                      "(amp1, extent1, amp2, extent2)."},
         "stepconst": {
-            'func': tacfit.model.model_stepconst,
             'irf': tacfit.model.irf_stepconst,
             'desc': "Step function followed by constant "
                     "(amp1, extent1, amp2)."},
         "normconst": {
-            'func': tacfit.model.model_normconst,
             'irf': tacfit.model.irf_normconst,
             'desc': "Smooth transition to constant "
                     "(amp1, extent1, width1, amp2)."},
         "stepnorm": {
-            'func': tacfit.model.model_stepnorm,
             'irf': tacfit.model.irf_stepnorm,
             'desc': "Step function followed by smooth transition to 0 "
                     "(amp1, extent1, amp2, extent2, width2)."
         },
         "norm2": {
-            'func': tacfit.model.model_norm2,
             'irf': tacfit.model.irf_norm2,
             'desc': "Two smooth transitions between amp1, amp2 and 0 "
                     "(amp1, extent1, width1, amp2, extent2, width2)."
@@ -257,22 +248,22 @@ def main(sys_args: list[str]):
     # Fit least squares if required
     if args.leastsq:
         print("Starting least squares fitting.")
-        if args.save_figs is None:
-            output = None
-        else:
-            output = args.save_figs[0]
+        output = None
+        if args.save_output is not None:
+            output = args.save_output
+
         tacfit.fit_leastsq(tac[args.time_label],
                            tac[args.tissue_label],
                            tac[args.input_label],
-                           models[model_str]['func'],  # type: ignore
+                           models[model_str]['irf'],  # type: ignore
                            params,
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
-                           irf=models[model_str]['irf'],  # type: ignore
                            output=output,
                            tcut=tcut,
                            confint=args.no_confint,
-                           delay=tdelay)
+                           delay=tdelay,
+                           progress=args.hideprogress)
         print()
 
     # Monte Carlo sampling if required
@@ -305,7 +296,7 @@ def main(sys_args: list[str]):
                          output=output,
                          tcut=tcut,
                          delay=tdelay,
-                         progress=args.mc_hideprogress)
+                         progress=args.hideprogress)
         print()
 
     # Plot data if required
