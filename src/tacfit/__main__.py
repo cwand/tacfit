@@ -99,8 +99,8 @@ def main(sys_args: list[str]):
     parser.add_argument("--mc_threads", type=int, metavar="N",
                         help="Use N threads to run the monte carlo search ("
                              "required when using --mcpost).")
-    parser.add_argument("--mc_hideprogress", action='store_false',
-                        help="Hides the progress bar when using --mcpost.")
+    parser.add_argument("--hideprogress", action='store_false',
+                        help="Hides progress bars.")
     parser.add_argument("--rng_seed", type=int,
                         help="Set the RNG seed. If no seed is provided the "
                              "seed will be set automatically from "
@@ -263,7 +263,8 @@ def main(sys_args: list[str]):
                            output=output,
                            tcut=tcut,
                            confint=args.no_confint,
-                           delay=tdelay)
+                           delay=tdelay,
+                           progress=args.hideprogress)
         print()
 
     # Monte Carlo sampling if required
@@ -296,7 +297,7 @@ def main(sys_args: list[str]):
                          output=output,
                          tcut=tcut,
                          delay=tdelay,
-                         progress=args.mc_hideprogress)
+                         progress=args.hideprogress)
         print()
 
     # Plot data if required
