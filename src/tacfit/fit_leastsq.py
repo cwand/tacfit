@@ -6,6 +6,18 @@ import numpy.typing as npt
 import os
 
 
+def _print_fit(result: lmfit.model.ModelResult,
+               delay: float,
+               tcut: int,
+               path: str):
+    with open(path, "w") as f:
+        f.write(f'r^2\t{result.rsquared}\n')
+        f.write(f'delay\t{delay}\n')
+        f.write(f'tcut\t{tcut}\n')
+        for param in result.params:
+            f.write(f'{param}\t{result.params[param].value}\t'
+                    f'{result.params[param].stderr}\n')
+
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
                 input_data: npt.NDArray[np.float64],
@@ -158,6 +170,10 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
             if output is None:
                 plt.show()
             else:
+                _print_fit(res,
+                           t_d,
+                           t_cut[i],
+                           os.path.join(output, "result.txt"))
                 fit_png_path = os.path.join(output, "fit.png")
                 plt.savefig(fit_png_path)
                 plt.clf()

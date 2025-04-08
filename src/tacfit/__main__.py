@@ -270,7 +270,6 @@ def main(sys_args: list[str]):
             print("WARNING: --save_figs is deprecated and will be removed. "
                   "Instead use --save_output.")
             output = args.save_figs
-        print(output)
 
 
         tacfit.fit_leastsq(tac[args.time_label],
