@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.typing as npt
-import scipy
 
 
 def irf_step2(
@@ -28,7 +27,7 @@ def irf_step2(
     ext1 = kwargs['extent1']
     ext2 = kwargs['extent2']
 
-    tt = np.array(t, ndmin=1)
+    tt = np.atleast_1d(t)
 
     # Calculate normcdf using error function (seems to be much quicker)
     res = np.zeros_like(tt)

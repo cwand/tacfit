@@ -33,7 +33,8 @@ class TestModelStep2(unittest.TestCase):
         tp = np.array([0.0, 3.7, 7.1, 10.2, 13.5, 17.8])
         in_func = np.array([0.0, 572.1, 3021.5, 123.7, 50.21, 10.5])
 
-        m = integrate.model(tp, in_func, tp.copy(), step2.irf_step2,
+        m = integrate.model(tp, in_func, tp.copy(),
+                            step2.irf_step2,  # type: ignore
                             amp1=amp, amp2=amp2, extent1=extent,
                             extent2=extent2)
 
@@ -57,11 +58,12 @@ class TestModelStep2(unittest.TestCase):
 
         t_out = np.array([3.7])
 
-        m = integrate.model(tp, in_func, t_out, step2.irf_step2,
+        m = integrate.model(tp, in_func, t_out,
+                            step2.irf_step2,  # type: ignore
                             amp1=amp, amp2=amp2, extent1=extent,
                             extent2=extent2)
 
-        m_exp = np.array([113.415])
+        m_exp = np.atleast_1d([113.415])
 
         self.assertTrue(np.all(np.abs(m - m_exp) < 0.001))
 
@@ -76,10 +78,11 @@ class TestModelStep2(unittest.TestCase):
 
         t_out = np.array([8.0])
 
-        m = integrate.model(tp, in_func, t_out, step2.irf_step2,
+        m = integrate.model(tp, in_func, t_out,
+                            step2.irf_step2,  # type: ignore
                             amp1=amp, amp2=amp2, extent1=extent,
                             extent2=extent2)
 
-        m_exp = np.array([1340.227])
+        m_exp = np.atleast_1d([1340.227])
 
         self.assertTrue(np.all(np.abs(m - m_exp) < 0.001))

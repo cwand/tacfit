@@ -1,6 +1,5 @@
 import numpy.typing as npt
 import numpy as np
-import scipy
 
 
 def irf_stepconst(
@@ -26,7 +25,7 @@ def irf_stepconst(
     amp2 = kwargs['amp2']
     ext1 = kwargs['extent1']
 
-    tt = np.array(t, ndmin=1)
+    tt = np.atleast_1d(t)
     res = amp2 * np.ones_like(tt)
     for i in range(len(tt)):
         if tt[i] < ext1:

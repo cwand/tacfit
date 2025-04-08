@@ -32,7 +32,8 @@ class TestModelStepconst(unittest.TestCase):
 
         t_out = np.array([0.0, 1.0, 5.0, 9.0])
 
-        m = integrate.model(tin, in_func, t_out, stepconst.irf_stepconst,
+        m = integrate.model(tin, in_func, t_out,
+                            stepconst.irf_stepconst,  # type: ignore
                             amp1=amp, amp2=amp2, extent1=extent)
 
         m_exp = np.array([0.0, 0.6, 26.25, 63.150])

@@ -22,6 +22,7 @@ def _print_fit(result: lmfit.model.ModelResult,
             f.write(f'{param}\t{result.params[param].value}\t'
                     f'{result.params[param].stderr}\n')
 
+
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
                 input_data: npt.NDArray[np.float64],
@@ -70,21 +71,6 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     progress    --  Whether to show a progress bar if doing a scan
     """
 
-    # Whether we do a single fit or a scan over tcut and/or tdelay
-    single_fit = True
-
-    # Input sanitation:
-
-    # If tcut is None set it to use all data points
-    t_cut = [time_data.size]
-    if isinstance(tcut, int):
-        # An int was given as tcut: use as single value for t_cut
-        t_cut = [tcut]
-    elif isinstance(tcut, list):
-        # A list was given: fit all values in the list
-        single_fit = False
-        t_cut = tcut
-
     # If delay is None, use the value 0.0 (no delay)
     t_d = 0.0
     if delay is not None:
@@ -92,7 +78,11 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     # Make new input function from this delay:
     input_time = time_data + t_d
 
-    if single_fit:
+    if tcut is None:
+        # Use all data if not cut-off is set
+        tcut = len(time_data)
+
+    if isinstance(tcut, int):
 
         # Create lmfit Parameters-object
         parameters = lmfit.create_params(**params)
@@ -121,7 +111,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
         # Show best fitting IRF:
         fig, ax = plt.subplots()
-        tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[t_cut],
+        tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[tcut],
                                                 0.01)
         best_irf = model(tt, **res.best_values)  # type: ignore
         ax.plot(tt, best_irf, 'k-', label="Fitted IRF")
@@ -182,7 +172,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         r2s = np.zeros(len(tcut))
         scan_res = np.zeros((2 * len(params), len(tcut)))
 
-        for i in tqdm(range(len(t_cut)), disable=(not progress)):
+        for i in tqdm(range(len(tcut)), disable=(not progress)):
             # Iterate over tcuts
 
             # Create lmfit Parameters-object
@@ -194,20 +184,18 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                                       't_out', 'irf'])
 
             # Run fit from initial values
-            res = fit_model.fit(tissue_data[0:t_cut[i]],
-                                t_in=input_time[0:t_cut[i]],
-                                in_func=input_data[0:t_cut[i]],
-                                t_out=time_data[0:t_cut[i]],
+            res = fit_model.fit(tissue_data[0:tcut[i]],
+                                t_in=input_time[0:tcut[i]],
+                                in_func=input_data[0:tcut[i]],
+                                t_out=time_data[0:tcut[i]],
                                 irf=model,
                                 params=parameters)
-
 
             # Save results of fit before moving on to next tcut
             for param in params:
                 scan_res[2*param_idx[param]][i] = res.params[param].value
                 scan_res[2*param_idx[param] + 1][i] = res.params[param].stderr
             r2s[i] = res.rsquared
-
 
         # Make a plot showing the fit scan
         n_params = len(params)
@@ -218,7 +206,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         for param in params:
             axs[i].set_ylabel(param)
             axs[i].errorbar(
-                 t_cut,
+                 tcut,
                  scan_res[2*param_idx[param]],
                  yerr=scan_res[2*param_idx[param] + 1],
                  fmt='s',
@@ -231,7 +219,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         axs[i].set_ylabel('r^2')
         axs[i].set_xlabel('tcut')
         axs[i].scatter(
-             t_cut,
+             tcut,
              r2s,
              marker='x'
         )

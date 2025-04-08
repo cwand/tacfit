@@ -42,7 +42,8 @@ class TestModelStepnorm(unittest.TestCase):
         t_out = np.array([0.0, 1.0, 5.0, 9.0, 12.0, 15.0,
                           18.0, 21.0, 25.0, 28.0, 31.0])
 
-        m = integrate.model(tin, in_fnc, t_out, stepnorm.irf_stepnorm,
+        m = integrate.model(tin, in_fnc, t_out,
+                            stepnorm.irf_stepnorm,  # type: ignore
                             amp1=amp1, amp2=amp2, extent1=extent1,
                             extent2=extent2, width2=width2)
 

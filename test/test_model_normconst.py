@@ -39,9 +39,9 @@ class TestModelNormconst(unittest.TestCase):
 
         t_out = np.array([0.0, 1.0, 5.0, 9.0])
 
-        m = integrate.model(tin, in_func, t_out, normconst.irf_normconst,
+        m = integrate.model(tin, in_func, t_out,
+                            normconst.irf_normconst,  # type: ignore
                             amp1=amp, amp2=amp2, extent1=extent, width1=width)
-
 
         m_exp = np.array([0.0,
                           0.599925578257793,

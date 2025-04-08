@@ -49,7 +49,8 @@ class TestModelNorm2(unittest.TestCase):
 
         t_out = np.array([0.0, 2.9, 3.1, 5.0, 9.0, 13.0, 15.0, 16.0, 19.0])
 
-        m = integrate.model(tin, in_func, t_out, norm2.irf_norm2,
+        m = integrate.model(tin, in_func, t_out,
+                            norm2.irf_norm2,  # type: ignore
                             amp1=amp1, amp2=amp2, extent1=extent1,
                             extent2=extent2, width1=wid1, width2=wid2)
 

@@ -3,6 +3,7 @@ import numpy.typing as npt
 from typing import Callable
 import scipy
 
+
 def model(
         t_in: npt.NDArray[np.float64],
         in_func: npt.NDArray[np.float64],
@@ -32,7 +33,7 @@ def model(
         # The integrand is infunc(tau) * IRF(ti-tau)
         def integrand(tau: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return (np.interp(tau, input_time, in_func, left=0.0) *
-                    irf(ti - tau, **kwargs))
+                    irf(ti - tau, **kwargs))  # type: ignore
 
         # We integrate each step of the input function separately
         j = 0

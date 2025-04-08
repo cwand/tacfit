@@ -252,11 +252,10 @@ def main(sys_args: list[str]):
         if args.save_output is not None:
             output = args.save_output
 
-
         tacfit.fit_leastsq(tac[args.time_label],
                            tac[args.tissue_label],
                            tac[args.input_label],
-                           models[model_str]['irf'],
+                           models[model_str]['irf'],  # type: ignore
                            params,
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
