@@ -172,12 +172,16 @@ to the value 10.0.
 ### Exclude data
 It is possible to only include a subset of the data by using the 
 ```--tcut N``` option, where N is an integer describing the number of data 
-points that should be included in the fit.
+points that should be included in the fit, or the ```--scut T``` option, where
+T is the time of the last data point to include.
 
 It is possible to scan over a range of different tcut-values, by giving more
-than one value: ```--tcut N1 N2 ...```. In this case, a plot is shown after
+than one value: ```--tcut N1 N2 ...``` (this feature is not yet implemented
+for Monte Carlo sampling). In this case, a plot is shown after
 the fit with the optimal parameter values for each tcut. To hide the progress
 bar, use the option ```--hideprogress``` (useful if piping output to a file).
+
+
 
 ### Delayed input function
 To apply a fixed time delay on the input function use the ```--delay D```, 
