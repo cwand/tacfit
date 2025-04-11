@@ -283,9 +283,10 @@ def main(sys_args: list[str]):
         print(f'  burn:    {args.mc_burn}')
         print(f'  thin:    {args.mc_thin}')
         print(f'  threads: {args.mc_threads}')
-        output = None
-        if args.save_output is not None:
-            output = args.save_output
+        if args.save_output is None:
+            output = None
+        else:
+            output = args.save_figs[0]
         tacfit.mc_sample(time_data=tac[args.time_label],
                          tissue_data=tac[args.tissue_label],
                          input_data=tac[args.input_label],
@@ -309,9 +310,10 @@ def main(sys_args: list[str]):
     # Plot data if required
     if args.plot_nofit:
         print("Plotting data without fit.")
-        output = None
-        if args.save_output is not None:
-            output = os.path.join(args.save_output, "plot_nofit.png")
+        if args.save_figs is None:
+            output = None
+        else:
+            output = os.path.join(args.save_figs[0], "plot_nofit.png")
         tacfit.plot_tac(tac[args.time_label],
                         tac[args.input_label],
                         tac[args.tissue_label],
