@@ -50,10 +50,13 @@ def main(sys_args: list[str]):
     parser.add_argument("model", help="Model to use for fitting. Use the "
                                       "option --list_models to see all "
                                       "available models.")
-    parser.add_argument("--tcut", metavar="N", type=int, nargs='*',
-                        help="Cut the data at the N\'th data point. It is "
-                             "possible to provide a list of values to scan"
-                             "through them.")
+    tcut_group = parser.add_mutually_exclusive_group()
+    tcut_group.add_argument("--tcut", metavar="N", type=int, nargs='*',
+                            help="Cut the data at the N\'th data point. It is "
+                            "possible to provide a list of values to scan"
+                            "through them.")
+    tcut_group.add_argument("--scut", metavar="T", type=float,
+                            help="Cut the data after T seconds (time units).")
     parser.add_argument("--delay", type=float, metavar="T",
                         help="Delay the input function signal for T seconds.")
     parser.add_argument("--param", action='append', nargs=4,
@@ -142,15 +145,19 @@ def main(sys_args: list[str]):
         exit()
     print()
 
-    # Report chosen tcut and handle int vs list[int] options
+    # Report chosen tcut/scut and handle int vs list[int] options
     tcut = None
+    scut = None
     if args.tcut:
         tcut = args.tcut
         if len(tcut) == 1:
             tcut = tcut[0]
         print(f'Using tcut = {tcut}.')
+    elif args.scut:
+        scut = args.scut
+        print(f'Using scut = {scut}')
     else:
-        print("No tcut set, using all data.")
+        print("No tcut/scut set, using all data.")
     print()
 
     # Report chosen tdelay and handle float vs list[float] options
@@ -165,7 +172,6 @@ def main(sys_args: list[str]):
     # Possible models to use for fitting:
     models = {
         "nomodel": {
-            'func': lambda x: 1,
             'irf': lambda x: 1,
             'desc': "Mock model, used when no modelling is required"
         },
@@ -261,6 +267,7 @@ def main(sys_args: list[str]):
                             'input': args.input_label},
                            output=output,
                            tcut=tcut,
+                           scut=scut,
                            confint=args.no_confint,
                            delay=tdelay,
                            progress=args.hideprogress)
@@ -276,7 +283,7 @@ def main(sys_args: list[str]):
         print(f'  burn:    {args.mc_burn}')
         print(f'  thin:    {args.mc_thin}')
         print(f'  threads: {args.mc_threads}')
-        if args.save_figs is None:
+        if args.save_output is None:
             output = None
         else:
             output = args.save_figs[0]
@@ -285,7 +292,7 @@ def main(sys_args: list[str]):
                          input_data=tac[args.input_label],
                          labels={'tissue': args.tissue_label,
                                  'input': args.input_label},
-                         model=models[model_str]['func'],  # type: ignore
+                         model=models[model_str]['irf'],  # type: ignore
                          params=params,
                          error_model=args.mc_error,
                          nsteps=args.mc_steps,
@@ -295,6 +302,7 @@ def main(sys_args: list[str]):
                          thin=args.mc_thin,
                          output=output,
                          tcut=tcut,
+                         scut=scut,
                          delay=tdelay,
                          progress=args.hideprogress)
         print()

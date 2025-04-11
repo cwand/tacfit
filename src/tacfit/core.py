@@ -9,10 +9,10 @@ def load_table(path: str) -> dict[str, npt.NDArray[np.float64]]:
     """Loads a data table saved with numpy.savetxt.
 
     Arguments:
-    path    --  The filename of the file containing the table.
+        path    --  The filename of the file containing the table.
 
-    Return value:
-    A dict object with column headers as keys and data as values.
+    Returns:
+        A dict object with column headers as keys and data as values.
     """
 
     # Read labels from file
@@ -40,18 +40,19 @@ def plot_tac(time_data: npt.NDArray[np.float64],
     """Plot TAC-data.
 
     Arguments:
-    time_data   --  Array of time data
-    input_data  --  Array of input function data
-    tissue_data --  Array of tissue data
-    labels      --  Optional labels to use when plotting. Acknowledged keys
-                    are:
-                    labels['time']:     Used on the x-axis
-                    labels['tacunit']:  Used on the y-axis
-                    labels['input']:    Used in the input function data legend
-                    labels['tissue']:   Used in the tissue data legend
-    output      --  If None, the plot is shown on the screen.
-                    If a path is given, the plot is saved to a file on that
-                    path.
+        time_data   --  Array of time data
+        input_data  --  Array of input function data
+        tissue_data --  Array of tissue data
+        labels      --  Optional labels to use when plotting. Acknowledged keys
+                        are:
+                        labels['time']:     Used on the x-axis
+                        labels['tacunit']:  Used on the y-axis
+                        labels['input']:    Used in the input function data
+                                            legend
+                        labels['tissue']:   Used in the tissue data legend
+        output      --  If None, the plot is shown on the screen.
+                        If a path is given, the plot is saved to a file on that
+                        path.
 
     """
 
@@ -90,3 +91,14 @@ def plot_tac(time_data: npt.NDArray[np.float64],
     else:
         plt.savefig(output)
         plt.clf()
+
+
+def create_corrected_input_function(orig_time_data: npt.NDArray[np.float64],
+                                    orig_infunc_data: npt.NDArray[np.float64],
+                                    delay: float = 0.0) \
+        -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+
+    corrected_time_data = np.array(orig_time_data) + delay
+    corrected_infunc_data = np.array(orig_infunc_data)
+
+    return corrected_time_data, corrected_infunc_data

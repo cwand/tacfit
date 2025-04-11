@@ -1,12 +1,15 @@
 import lmfit
 import matplotlib.pyplot as plt
 from typing import Callable, Optional, Union
+
+import numpy
 import numpy as np
 import numpy.typing as npt
 import os
 
 from tqdm import tqdm
 
+import tacfit
 import tacfit.model.integrate as integrate
 
 
@@ -32,6 +35,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
                 tcut: Optional[Union[int, list[int]]] = None,
+                scut: Optional[float] = None,
                 delay: Optional[float] = None,
                 confint: bool = True,
                 output: Optional[str] = None,
@@ -61,6 +65,9 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                     the data points are included in the fit. If a list
                     is given, a fit will be made for all values in the
                     list.
+    scut        --  Fit only data up to time scut. If None (default), all data
+                    points are included in the fit. If both tcut and scut is
+                    set, only the tcut value is used.
     delay       --  Delay the input function. This shifts the measurement times
                     of the input function, such that a point previously
                     measured at time t will be set to a new time t+delay. None
@@ -76,11 +83,17 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
     if delay is not None:
         t_d = delay
     # Make new input function from this delay:
-    input_time = time_data + t_d
+    corr_input_time, corr_input_data = (
+        tacfit.create_corrected_input_function(time_data, input_data, t_d))
 
     if tcut is None:
-        # Use all data if not cut-off is set
-        tcut = len(time_data)
+        # Check if scut is set
+        if scut is not None:
+            # Find the largest time point larger than scut
+            tcut = int(np.searchsorted(time_data, scut))
+        else:
+            # Use all data if not cut-off is set
+            tcut = len(time_data)
 
     if isinstance(tcut, int):
 
@@ -94,8 +107,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
         # Run fit from initial values
         res = fit_model.fit(tissue_data[0:tcut],
-                            t_in=input_time[0:tcut],
-                            in_func=input_data[0:tcut],
+                            t_in=corr_input_time,
+                            in_func=corr_input_data,
                             t_out=time_data[0:tcut],
                             irf=model,
                             params=parameters)
@@ -121,27 +134,26 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
         plt.legend()
         plt.grid(visible=True)
-        if output is None:
-            plt.show()
-        else:
+        if output is not None:
+            # Save figure to file
             fit_png_path = os.path.join(output, "irf.png")
             plt.savefig(fit_png_path)
             plt.clf()
 
         # Calculate best fitting model
-        best_fit = integrate.model(input_time,
-                                   input_data,
+        best_fit = integrate.model(corr_input_time,
+                                   corr_input_data,
                                    time_data[0:tcut],
                                    model,
                                    **res.best_values)
 
         # Plot results
         if '_delay' in params:
-            input_time = input_time + res.best_values['_delay']
+            corr_input_time = corr_input_time + res.best_values['_delay']
         fig, ax = plt.subplots()
         ax.plot(time_data[0:tcut], tissue_data[0:tcut],
                 'gx', label=labels['tissue'])
-        ax.plot(input_time[0:tcut], input_data[0:tcut],
+        ax.plot(corr_input_time[0:tcut], corr_input_data[0:tcut],
                 'rx--', label=labels['input'])
         ax.plot(time_data[0:tcut], best_fit, 'k-', label="Fit")
 
@@ -150,9 +162,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
         plt.legend()
         plt.grid(visible=True)
-        if output is None:
-            plt.show()
-        else:
+        if output is not None:
+            # Save figure to file
             _print_fit(res,
                        t_d,
                        tcut,
@@ -185,8 +196,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
 
             # Run fit from initial values
             res = fit_model.fit(tissue_data[0:tcut[i]],
-                                t_in=input_time[0:tcut[i]],
-                                in_func=input_data[0:tcut[i]],
+                                t_in=corr_input_time,
+                                in_func=corr_input_data,
                                 t_out=time_data[0:tcut[i]],
                                 irf=model,
                                 params=parameters)
@@ -229,9 +240,11 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         axs[i].grid(which='major', alpha=0.5)
         axs[i].grid(axis='y', which='minor', alpha=0.2)
 
-        if output is None:
-            plt.show()
-        else:
+        if output is not None:
             fit_png_path = os.path.join(output, "scan.png")
             plt.savefig(fit_png_path)
             plt.clf()
+
+    if output is None:
+        # Show all figures
+        plt.show()

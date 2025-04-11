@@ -6,6 +6,9 @@ import corner
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 import os
+import tacfit
+
+import tacfit.model.integrate as integrate
 
 
 def _resample_gaussian(input_data: npt.NDArray[np.float64],
@@ -85,8 +88,6 @@ def _init_walkers(start_position: npt.NDArray[np.float64],
 def _emcee_fcn(param_values: npt.NDArray[np.float64],
                param_names: list[str],
                model: Callable[[npt.NDArray[np.float64],
-                                npt.NDArray[np.float64],
-                                npt.NDArray[np.float64],
                                 dict[str, float]],
                                npt.NDArray[np.float64]],
                input_time: npt.NDArray[np.float64],
@@ -110,16 +111,14 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
         if not param_bounds[param][0] < params[param] < param_bounds[param][1]:
             return -np.inf
 
-    # If delay is modeled as a nuisance parameter, shift the input time
-    td = 0.0
-    if '_delay' in params:
-        td = params['_delay']
-    input_time_delayed = input_time + td
-
-    # Calculate the model given the current parameters and the resampled input
-    ymodel = model(input_time_delayed,
-                   input_data,
-                   time_data, **params)  # type: ignore
+    # Calculate the model given the current parameters and the input
+    ymodel = integrate.model(
+        input_time,
+        input_data,
+        time_data,
+        model,
+        **params
+    )
 
     # Calculate and return the log-proability distribution (non-normalised)
     if error_model == "const":
@@ -139,8 +138,6 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               input_data: npt.NDArray[np.float64],
               labels: dict[str, str],
               model: Callable[[npt.NDArray[np.float64],
-                               npt.NDArray[np.float64],
-                               npt.NDArray[np.float64],
                                dict[str, float]],
                               npt.NDArray[np.float64]],
               params: dict[str, dict[str, float]],
@@ -151,6 +148,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
               burn: int,
               thin: int,
               tcut: Optional[int] = None,
+              scut: Optional[float] = None,
               delay: Optional[float] = None,
               progress: bool = True,
               output: Optional[str] = None) -> None:
@@ -162,10 +160,16 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     tcut_sane = time_data.size
     if tcut is not None:
         tcut_sane = tcut
+    elif scut is not None:
+        tcut_sane = int(np.searchsorted(time_data, scut))
 
-    input_time = time_data.copy()
+    # If delay is None, use the value 0.0 (no delay)
+    t_d = 0.0
     if delay is not None:
-        input_time = input_time + delay
+        t_d = delay
+    # Make new input function from this delay:
+    corr_input_time, corr_input_data = (
+        tacfit.create_corrected_input_function(time_data, input_data, t_d))
 
     # Parameters need to be unpacked when passed to emcee
     param_start = []  # Contains the optimised parameters (from an actual fit)
@@ -177,9 +181,9 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         param_bounds[param] = (params[param]['min'], params[param]['max'])
 
     # Cut data as required
-    input_time_cut = input_time[0:tcut_sane]
+    # input_time_cut = input_time[0:tcut_sane]
     time_data_cut = time_data[0:tcut_sane]
-    input_data_cut = input_data[0:tcut_sane]
+    # input_data_cut = input_data[0:tcut_sane]
     tissue_data_cut = tissue_data[0:tcut_sane]
 
     # Dimensionality of the parameter space
@@ -198,8 +202,8 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         # Start MC
         sampler = emcee.EnsembleSampler(nwalkers, n_dim, _emcee_fcn,
                                         args=(param_names, model,
-                                              input_time_cut,
-                                              time_data_cut, input_data_cut,
+                                              corr_input_time,
+                                              time_data_cut, corr_input_data,
                                               tissue_data_cut, param_bounds,
                                               error_model),
                                         pool=pool)
@@ -220,9 +224,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         ax.yaxis.set_label_coords(-0.1, 0.5)
 
     axes[-1].set_xlabel("step number")
-    if output is None:
-        plt.show()
-    else:
+    if output is not None:
         samples_png_path = os.path.join(output, "samples.png")
         print("Saving samples image to file", samples_png_path, ".")
         plt.savefig(samples_png_path)
@@ -232,18 +234,14 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     plt.plot(sampler.acceptance_fraction, 'o')
     plt.xlabel('walker')
     plt.ylabel('acceptance fraction')
-    if output is None:
-        plt.show()
-    else:
+    if output is not None:
         samples_png_path = os.path.join(output, "acceptance.png")
         plt.savefig(samples_png_path)
         plt.clf()
 
     # Make corner plot
     corner.corner(flat_samples, labels=param_names, truths=param_start)
-    if output is None:
-        plt.show()
-    else:
+    if output is not None:
         corner_png_path = os.path.join(output, "corner.png")
         plt.savefig(corner_png_path)
         plt.clf()
@@ -278,40 +276,71 @@ def mc_sample(time_data: npt.NDArray[np.float64],
 
     # Plotting
 
-    # Find ML50 fit and fit using the starting position
-    ml50 = {}
+    # Find mean fit and fit using the starting position
+    mean_values = {}
     original_values = {}
     for i in range(n_dim):
-        ml50[param_names[i]] = pct[2][i]
+        mean_values[param_names[i]] = means[i]
         original_values[param_names[i]] = param_start[i]
-
-    fig, ax = plt.subplots()
-    ml50_fit = model(input_time_cut,  # type: ignore
-                     input_data_cut,
-                     time_data_cut,
-                     **ml50)
-    original_fit = model(input_time_cut,  # type: ignore
-                         input_data_cut,
-                         time_data_cut,
-                         **original_values)
 
     # Pick 100 random samples and plot the projection to illustrate
     # parameter variation
     inds = np.random.randint(len(flat_samples), size=100)
+
+    # Plot IRF estimates
+    fig, ax = plt.subplots()
+    tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[tcut_sane],
+                                            0.01)
+    mean_irf = model(tt, **mean_values)  # type: ignore
+    original_irf = model(tt, **original_values)  # type: ignore
     for ind in inds:
         sample = flat_samples[ind]
         smpl_params = {}
         for i in range(len(param_names)):
             smpl_params[param_names[i]] = sample[i]
-        smpl_model = model(input_time_cut,  # type: ignore
-                           input_data_cut,
-                           time_data_cut,
-                           **smpl_params)
+        smpl_model = model(tt, **smpl_params)  # type: ignore
+        ax.plot(tt, smpl_model, "C1", alpha=0.1)
+    ax.plot(tt, mean_irf, 'b-', label="Mean IRF")
+    ax.plot(tt, original_irf, 'k-', label="Original IRF")
+    plt.legend()
+    plt.grid(visible=True)
+    if output is not None:
+        fit_png_path = os.path.join(output, "irf_mc.png")
+        plt.savefig(fit_png_path)
+        plt.clf()
+
+    # Plot FIT
+    fig, ax = plt.subplots()
+    mean_fit = integrate.model(corr_input_time,  # type: ignore
+                               corr_input_data,
+                               time_data_cut,
+                               model,
+                               **mean_values)
+    original_fit = integrate.model(corr_input_time,  # type: ignore
+                                   corr_input_data,
+                                   time_data_cut,
+                                   model,
+                                   **original_values)
+
+    for ind in inds:
+        sample = flat_samples[ind]
+        smpl_params = {}
+        for i in range(len(param_names)):
+            smpl_params[param_names[i]] = sample[i]
+        smpl_model = integrate.model(corr_input_time,  # type: ignore
+                                     corr_input_data,
+                                     time_data_cut,
+                                     model,
+                                     **smpl_params)
         ax.plot(time_data_cut, smpl_model, "C1", alpha=0.1)
 
     ax.plot(time_data_cut, tissue_data_cut, 'gx', label=labels['tissue'])
-    ax.plot(time_data_cut, input_data_cut, 'rx--', label=labels['input'])
-    ax.plot(time_data_cut, ml50_fit, 'b-', label="ML50 Fit")
+    input_time_plot = corr_input_time[0:tcut_sane]
+    if '_delay' in mean_values:
+        input_time_plot += mean_values['_delay']
+    ax.plot(input_time_plot, input_data[0:tcut_sane],
+            'rx--', label=labels['input'])
+    ax.plot(time_data_cut, mean_fit, 'b-', label="Mean Fit")
     ax.plot(time_data_cut, original_fit, 'k-', label="Original Fit")
 
     ax.set_xlabel('Time [sec]')
@@ -319,9 +348,9 @@ def mc_sample(time_data: npt.NDArray[np.float64],
 
     plt.legend()
     plt.grid(visible=True)
-    if output is None:
-        plt.show()
-    else:
+    if output is not None:
         fit_png_path = os.path.join(output, "fit_mc.png")
         plt.savefig(fit_png_path)
         plt.clf()
+    else:
+        plt.show()
