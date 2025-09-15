@@ -58,7 +58,7 @@ work without problems.
 Assume that the time activity curves in ```tac.txt``` are saved under the 
 labels ```input``` and ```tissue```,
 and the time label is ```tacq```. We want to fit the ```stepconst``` model 
-(describe below) to the data.
+(described below) to the data.
 We use the command:
 ```
 > python -m tacfit tac.txt tacq input tissue stepconst --param amp1 0.1 0.05 x --param amp2 0.02 0.0 0.1 --param extent1 10 0 x --leastsq 
@@ -215,7 +215,7 @@ $$\mathcal{L}(y_i | c(t), \beta, \sigma_i) =
 \frac{1}{\sqrt{2\pi\sigma_i^2}}
 \exp\left(-\frac{(y_i - \mathcal{M}_i(c(t), \beta))^2}{2\sigma_i^2}\right)$$,\
 where $\mathcal{M}_i$ is the modeled tissue activity curve evaluated at time 
-point $t_i$, $\sigma_i$ is the estimated uncertainty on $y_i$ and we have 
+point $t_i$, $\sigma_i$ is the estimated uncertainty on $y_i$, and we have 
 assumed $y_i$ is drawn from a normal distribution with mean $\mathcal{M}_i$
 and variance $\sigma_i^2$.
 The uncertainties $\sigma_i$ will be treated as nuisance parameters of the 
@@ -236,7 +236,7 @@ $$\mathcal{L}(\beta, \sigma | y, c(t)) =
 \prod_i \frac{1}{\sqrt{2\pi\sigma_i^2}}
 \exp\left(-\frac{(y_i - \mathcal{M}_i(c(t), \beta))^2}{2\sigma_i^2}\right) $$.\
 The marginal likelihood $\mathcal{L}(y)$ is independent on the model parameters 
-and can be identified as the partition function $Z$, the calculataion of which 
+and can be identified as the partition function $Z$, the calculation of which 
 is handled implicitly by the Monte Carlo sampling algorithm. 
 Here we assume the input function $c(t)$ is a fixed parameter of the model. 
 Methods to include the uncertainty on the measurements of $c(t_i)$ are under 
@@ -252,10 +252,10 @@ models are implemented:
 * ```sqrt```: Uncertainties scale with the square root of the measured data, 
   i.e. $\sigma_i^2 = \sigma^2 y_i$.
 
-The sampling is run in ```tacfit``` very similarly to a least squares fit, 
+The sampling is run in ```tacfit``` very similarly to a least-squares fit, 
 albeit with a handful more options:
 ```
-> python -m tacfit tac.txt tacq input tissue stepconst --mcpost --mc_steps 1000 --mc_walkers 300 --mc_error const --mc_threads 4 --mc_burn 300 --mc_thin 30 --rng_seed 42 --param amp1 0.1 0.0 0.3 --param amp2 0.02 0.0 0.1 --param extent1 10 0 100 --param sigma 100 0.1 10000
+> python -m tacfit tac.txt tacq input tissue stepconst --mcpost --mc_steps 1000 --mc_walkers 300 --mc_error const --mc_threads 4 --mc_burn 300 --mc_thin 30 --rng_seed 42 --param amp1 0.1 0.0 0.3 --param amp2 0.02 0.0 0.1 --param extent1 10 0 100 --param _sigma 100 0.1 10000
 ```
 The new options are:
 * ```--mcpost```: Tells ```tacfit``` to run the Monte Carlo sampling algorithm.

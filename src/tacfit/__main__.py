@@ -69,21 +69,21 @@ def main(sys_args: list[str]):
     parser.add_argument("--exprparam", action='append', nargs=2,
                         metavar=("PAR", "EXPR"),
                         help="Set a model parameter to a fixed exression (i.e."
-                             "not fitted), which may involve other model"
+                             " not fitted), which may involve other model "
                              "parameters.")
     parser.add_argument("--leastsq", action='store_true',
                         help="Fit the data to the chosen model using the "
                              "least squares method. Requires all model "
                              "parameters be set using --param.")
     parser.add_argument("--no_confint", action='store_false',
-                        help="Skips computation of confidence intervals when"
-                             "using leastsq, which can be an expensive"
+                        help="Skips computation of confidence intervals when "
+                             "using leastsq, which can be an expensive "
                              "computation in some models.")
     parser.add_argument("--mcpost", action='store_true',
                         help="Make a Monte Carlo sampling of the posterior "
                              "parameter probability distribution function.")
     parser.add_argument("--mc_error", type=str,
-                        choices=['const', 'sqrt'],
+                        choices=['const', 'sqrt', 'frac'],
                         help="Error model to use to calculate likelihood ("
                              "required when using --mcpost).")
     parser.add_argument("--mc_steps", type=int, metavar="S",

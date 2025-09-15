@@ -1,4 +1,5 @@
-from tacfit.mc_sampling import _log_prob_uconst, _log_prob_usqrt, _init_walkers
+from tacfit.mc_sampling import _log_prob_uconst, _log_prob_usqrt
+from tacfit.mc_sampling import _log_prob_ufrac, _init_walkers
 import numpy as np
 import unittest
 
@@ -56,6 +57,38 @@ class TestLogProbUSqrt(unittest.TestCase):
 
         self.assertRaises(ZeroDivisionError,
                           _log_prob_usqrt, data, smpl, sigma)
+
+
+class TestLogProbUFrac(unittest.TestCase):
+
+    def test_log_prob_on_data(self):
+        data = np.array([1.0, 2.0, 4.0, 16.0])
+        smpl = np.array([1.0, 2.0, 4.0, 16.0])
+
+        sigma = 0.1
+
+        lnp = _log_prob_ufrac(data, smpl, sigma)
+
+        self.assertAlmostEqual(0.682556, lnp, places=6)
+
+    def test_log_prob_tissue_off_data(self):
+        data = np.array([1.0, 2.0, 4.0, 16.0])
+        smpl = np.array([1.1, 1.9, 3.0, 20.0])
+
+        sigma = 0.1
+
+        lnp = _log_prob_ufrac(data, smpl, sigma)
+
+        self.assertAlmostEqual(-6.192444, lnp, places=6)
+
+    def test_error_on_0_data(self):
+        data = np.array([0.0, 2.0, 4.0, 16.0])
+        smpl = np.array([0.1, 1.9, 3.0, 20.0])
+
+        sigma = 0.1
+
+        self.assertRaises(ZeroDivisionError,
+                          _log_prob_ufrac, data, smpl, sigma)
 
 
 class TestInitWalkers(unittest.TestCase):
