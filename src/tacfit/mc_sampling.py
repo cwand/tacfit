@@ -62,6 +62,26 @@ def _log_prob_usqrt(data: npt.NDArray[np.float64],
     return float(-0.5 * np.sum(t1 + t2))
 
 
+def _log_prob_ufrac(data: npt.NDArray[np.float64],
+                    smpl: npt.NDArray[np.float64],
+                    sigma: float) -> float:
+
+    # Calculates the log-probability assuming sigma_i^2 = sigma^2 * y_i
+    # (uncertainty scales with square root of measured data)
+
+    # Check whether any data has value 0.0, which would cause problems
+    if np.any(data == 0.0):
+        raise ZeroDivisionError("Measured data has 0.0-values "
+                                "(zero uncertainty).")
+
+    s2 = np.power(sigma, 2.0)
+
+    t1 = np.log(2.0 * np.pi * s2 * np.power(data, 2.0))
+    t2 = np.power(data - smpl, 2.0) / (s2 * np.power(data, 2.0))
+
+    return float(-0.5 * np.sum(t1 + t2))
+
+
 def _init_walkers(start_position: npt.NDArray[np.float64],
                   param_bounds: npt.NDArray[np.float64],
                   n_walkers: int) -> npt.NDArray[np.float64]:
@@ -127,6 +147,10 @@ def _emcee_fcn(param_values: npt.NDArray[np.float64],
                                 params['_sigma'])
     if error_model == "sqrt":
         return _log_prob_usqrt(tissue_data,
+                               ymodel,
+                               params['_sigma'])
+    if error_model == "frac":
+        return _log_prob_ufrac(tissue_data,
                                ymodel,
                                params['_sigma'])
     else:
