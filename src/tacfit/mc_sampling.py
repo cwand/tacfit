@@ -364,7 +364,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     if '_delay' in mean_values:
         input_time_plot += mean_values['_delay']
     fit_ax.plot(input_time_plot, input_data[0:tcut_sane],
-            'rx--', label=labels['input'])
+                'rx--', label=labels['input'])
     fit_ax.plot(time_data_cut, mean_fit, 'b-', label="Mean Fit")
     fit_ax.plot(time_data_cut, original_fit, 'k-', label="Original Fit")
 
