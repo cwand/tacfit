@@ -238,16 +238,16 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     flat_samples = sampler.get_chain(discard=burn, thin=thin, flat=True)
 
     # Plot the history of each walker
-    fig, axes = plt.subplots(n_dim, figsize=(10, 7), sharex=True)
+    hist_fig, hist_axes = plt.subplots(n_dim, figsize=(10, 7), sharex=True)
     for i in range(n_dim):
-        ax = axes[i]
+        ax = hist_axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)
         ax.axvline(x=burn, linestyle="--", color="xkcd:azure")
         ax.set_xlim(0, len(samples))
         ax.set_ylabel(param_names[i])
         ax.yaxis.set_label_coords(-0.1, 0.5)
 
-    axes[-1].set_xlabel("step number")
+    hist_axes[-1].set_xlabel("step number")
     if output is not None:
         samples_png_path = os.path.join(output, "samples.png")
         print("Saving samples image to file", samples_png_path, ".")
@@ -255,9 +255,10 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         plt.clf()
 
     # Plot acceptance fraction of each walker:
-    plt.plot(sampler.acceptance_fraction, 'o')
-    plt.xlabel('walker')
-    plt.ylabel('acceptance fraction')
+    acc_fig, acc_axs = plt.subplots()
+    acc_axs.plot(sampler.acceptance_fraction, 'o')
+    acc_axs.set_xlabel('walker')
+    acc_axs.set_ylabel('acceptance fraction')
     if output is not None:
         samples_png_path = os.path.join(output, "acceptance.png")
         plt.savefig(samples_png_path)
@@ -312,7 +313,7 @@ def mc_sample(time_data: npt.NDArray[np.float64],
     inds = np.random.randint(len(flat_samples), size=100)
 
     # Plot IRF estimates
-    fig, ax = plt.subplots()
+    irf_fig, irf_ax = plt.subplots()
     tt: npt.NDArray[np.float64] = np.arange(0.0, time_data[tcut_sane],
                                             0.01)
     mean_irf = model(tt, **mean_values)  # type: ignore
@@ -323,18 +324,18 @@ def mc_sample(time_data: npt.NDArray[np.float64],
         for i in range(len(param_names)):
             smpl_params[param_names[i]] = sample[i]
         smpl_model = model(tt, **smpl_params)  # type: ignore
-        ax.plot(tt, smpl_model, "C1", alpha=0.1)
-    ax.plot(tt, mean_irf, 'b-', label="Mean IRF")
-    ax.plot(tt, original_irf, 'k-', label="Original IRF")
-    plt.legend()
-    plt.grid(visible=True)
+        irf_ax.plot(tt, smpl_model, "C1", alpha=0.1)
+    irf_ax.plot(tt, mean_irf, 'b-', label="Mean IRF")
+    irf_ax.plot(tt, original_irf, 'k-', label="Original IRF")
+    irf_ax.legend()
+    irf_ax.grid(visible=True)
     if output is not None:
         fit_png_path = os.path.join(output, "irf_mc.png")
         plt.savefig(fit_png_path)
         plt.clf()
 
     # Plot FIT
-    fig, ax = plt.subplots()
+    fit_fig, fit_ax = plt.subplots()
     mean_fit = integrate.model(corr_input_time,  # type: ignore
                                corr_input_data,
                                time_data_cut,
@@ -356,22 +357,22 @@ def mc_sample(time_data: npt.NDArray[np.float64],
                                      time_data_cut,
                                      model,
                                      **smpl_params)
-        ax.plot(time_data_cut, smpl_model, "C1", alpha=0.1)
+        fit_ax.plot(time_data_cut, smpl_model, "C1", alpha=0.1)
 
-    ax.plot(time_data_cut, tissue_data_cut, 'gx', label=labels['tissue'])
+    fit_ax.plot(time_data_cut, tissue_data_cut, 'gx', label=labels['tissue'])
     input_time_plot = corr_input_time[0:tcut_sane]
     if '_delay' in mean_values:
         input_time_plot += mean_values['_delay']
-    ax.plot(input_time_plot, input_data[0:tcut_sane],
+    fit_ax.plot(input_time_plot, input_data[0:tcut_sane],
             'rx--', label=labels['input'])
-    ax.plot(time_data_cut, mean_fit, 'b-', label="Mean Fit")
-    ax.plot(time_data_cut, original_fit, 'k-', label="Original Fit")
+    fit_ax.plot(time_data_cut, mean_fit, 'b-', label="Mean Fit")
+    fit_ax.plot(time_data_cut, original_fit, 'k-', label="Original Fit")
 
-    ax.set_xlabel('Time [sec]')
-    ax.set_ylabel('Mean ROI-activity concentration [Bq/mL]')
+    fit_ax.set_xlabel('Time [sec]')
+    fit_ax.set_ylabel('Mean ROI-activity concentration [Bq/mL]')
 
-    plt.legend()
-    plt.grid(visible=True)
+    fit_ax.legend()
+    fit_ax.grid(visible=True)
     if output is not None:
         fit_png_path = os.path.join(output, "fit_mc.png")
         plt.savefig(fit_png_path)
