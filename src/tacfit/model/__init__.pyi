@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Callable
 
-def irf_delay(
+def irf_const(
         t: npt.NDArray[np.float64],
         **kwargs: float) -> npt.NDArray[np.float64]: ...
 

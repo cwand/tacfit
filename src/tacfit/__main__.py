@@ -175,6 +175,10 @@ def main(sys_args: list[str]):
             'irf': lambda x: 1,
             'desc': "Mock model, used when no modelling is required"
         },
+        "const": {
+            'irf': tacfit.model.irf_const,
+            'desc': "Constant (amp)."
+        },
         "step2": {
             'irf': tacfit.model.irf_step2,
             'desc':  "Two step functions "
