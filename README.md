@@ -82,6 +82,19 @@ Below the various options and settings of ```tacfit``` are explained in detail.
 The list of implemented models and their descriptions can be seen by using the
 ```--list_models``` option.
 
+
+#### The const model
+In this model, the impulse response function $R(t)$ is\
+$$R(t) = a$$\
+i.e. a simple constant function.
+This models the situation where the tracer just accumulates indefinitely in
+the tissue. The parameters are specified in ```tacfit``` as (numerical 
+values are just examples):
+```
+--param amp 0.1 0.0 0.5
+```
+
+
 #### The stepconst model
 In this model, the impulse response function $R(t)$ is\
 $$R(t) = a_1, \quad t < t_1$$\
