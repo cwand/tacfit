@@ -17,6 +17,10 @@ def create_corrected_input_function(orig_time_data: npt.NDArray[np.float64],
                                     delay: float = ...) \
         -> tuple[npt.NDArray[np.float64], ...]: ...
 
+def calc_weights(time_data: npt.NDArray[np.float64],
+                 tissue_data: npt.NDArray[np.float64]) \
+        -> npt.NDArray[np.float64]: ...
+
 def fit_leastsq(time_data: npt.NDArray[np.float64],
                 tissue_data: npt.NDArray[np.float64],
                 input_data: npt.NDArray[np.float64],
