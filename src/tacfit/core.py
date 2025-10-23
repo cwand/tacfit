@@ -107,4 +107,4 @@ def create_corrected_input_function(orig_time_data: npt.NDArray[np.float64],
 def calc_weights(frame_duration: npt.NDArray[np.float64],
                  tissue_data: npt.NDArray[np.float64]) \
         -> npt.NDArray[np.float64]:
-    return np.sqrt(frame_duration / tissue_data)
+    return np.array(np.sqrt(np.abs(frame_duration / tissue_data)))

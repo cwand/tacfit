@@ -89,3 +89,13 @@ class TestCalcWeights(unittest.TestCase):
         self.assertAlmostEqual(float(weights[1]), 0.141421, places=6)
         self.assertAlmostEqual(float(weights[2]), 0.130931, places=6)
         self.assertAlmostEqual(float(weights[3]), 0.134164, places=6)
+
+    def test_weights_with_negative_tissue(self):
+        duration = np.array([3.0, 3.0, 6.0, 9.0])
+        tac = np.array([-100, 150, 350, 500])
+
+        weights = tacfit.calc_weights(duration, tac)
+        self.assertAlmostEqual(float(weights[0]), 0.173205, places=6)
+        self.assertAlmostEqual(float(weights[1]), 0.141421, places=6)
+        self.assertAlmostEqual(float(weights[2]), 0.130931, places=6)
+        self.assertAlmostEqual(float(weights[3]), 0.134164, places=6)
