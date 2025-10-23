@@ -111,8 +111,6 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         if weights is not None:
             fit_weights = weights[0:tcut]
 
-        print(fit_weights)
-
         # Run fit from initial values
         res = fit_model.fit(tissue_data[0:tcut],
                             t_in=corr_input_time,
