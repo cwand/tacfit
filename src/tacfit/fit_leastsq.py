@@ -34,6 +34,7 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 npt.NDArray[np.float64]],
                 params: dict[str, dict[str, float]],
                 labels: dict[str, str],
+                weights: Optional[npt.NDArray[np.float64]] = None,
                 tcut: Optional[Union[int, list[int]]] = None,
                 scut: Optional[float] = None,
                 delay: Optional[float] = None,
@@ -105,13 +106,19 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 independent_vars=['t_in', 'in_func',
                                                   't_out', 'irf'])
 
+        # Set weights
+        fit_weights = None
+        if weights is not None:
+            fit_weights = weights[0:tcut]
+
         # Run fit from initial values
         res = fit_model.fit(tissue_data[0:tcut],
                             t_in=corr_input_time,
                             in_func=corr_input_data,
                             t_out=time_data[0:tcut],
                             irf=model,
-                            params=parameters)
+                            params=parameters,
+                            weights=fit_weights)
 
         # Report and plot result of fit
 
@@ -186,6 +193,11 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
         for i in tqdm(range(len(tcut)), disable=(not progress)):
             # Iterate over tcuts
 
+            # Set weights
+            fit_weights = None
+            if weights is not None:
+                fit_weights = weights[0:tcut[i]]
+
             # Create lmfit Parameters-object
             parameters = lmfit.create_params(**params)
 
@@ -200,7 +212,8 @@ def fit_leastsq(time_data: npt.NDArray[np.float64],
                                 in_func=corr_input_data,
                                 t_out=time_data[0:tcut[i]],
                                 irf=model,
-                                params=parameters)
+                                params=parameters,
+                                weights=fit_weights)
 
             # Save results of fit before moving on to next tcut
             for param in params:

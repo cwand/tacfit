@@ -50,6 +50,10 @@ def main(sys_args: list[str]):
     parser.add_argument("model", help="Model to use for fitting. Use the "
                                       "option --list_models to see all "
                                       "available models.")
+    parser.add_argument("--weight", metavar="FRAME_DUR",
+                        help="Weight the residuals by the number of counts"
+                             "in each frame. FRAME_DUR is the label of the"
+                             "frame durations in the TAC-file.")
     tcut_group = parser.add_mutually_exclusive_group()
     tcut_group.add_argument("--tcut", metavar="N", type=int, nargs='*',
                             help="Cut the data at the N\'th data point. It is "
@@ -144,6 +148,20 @@ def main(sys_args: list[str]):
         print(f'Tissue label {args.tissue_label} was not found in data file.')
         exit()
     print()
+
+    weights = None
+    if args.weight:
+        if args.weight in tac:
+            print(f'Frame duration label {args.weight} '
+                  f'was found in data file.')
+            weights = tacfit.calc_weights(tac[args.weight],
+                                          tac[args.tissue_label])
+            print("Residuals will be weighted with counts")
+        else:
+            print(f'Frame duration label {args.weight} '
+                  f'was not found in data file.')
+            exit()
+        print()
 
     # Report chosen tcut/scut and handle int vs list[int] options
     tcut = None
@@ -269,6 +287,7 @@ def main(sys_args: list[str]):
                            params,
                            {'tissue': args.tissue_label,
                             'input': args.input_label},
+                           weights=weights,
                            output=output,
                            tcut=tcut,
                            scut=scut,

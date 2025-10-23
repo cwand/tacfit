@@ -182,6 +182,25 @@ This will fit only one parameter of the ```stepconst``` model (```amp1```),
 while ```amp2``` is kept fixed at 10% of ```amp1``` and ```extent1``` is set
 to the value 10.0.
 
+### Weighted fit
+
+It is possible to weight each residual in the fitting procedure by the
+esimated number of counts in each frame. To do this, the frame duration of
+each frame must be available in the data file. We assume that in ```tac.txt```
+there is a column with the label ```fdur``` which contains the frame durations
+for each frame in seconds.
+A weighted fit is then performed by using the ```--weight``` option:
+```
+> python -m tacfit tac.txt tacq input tissue stepconst --leastsq --weight fdur --param amp1 0.1 0.05 x --param amp2 0.02 0.0 0.1 --param extent1 10 0 x
+```
+
+The ith weight (i.e. the weight of the ith residual) is calculated as
+$$
+w_i = \sqrt{\frac{\Delta_i}{y_i}},
+$$
+where $\Delta_i$ is the frame duration of the ith frame and $y_i$ is the tissue activity
+concentration in the ith frame.
+
 ### Exclude data
 It is possible to only include a subset of the data by using the 
 ```--tcut N``` option, where N is an integer describing the number of data 
